@@ -1,3 +1,4 @@
+h1. Note: this is a fork to make cluster_chef work for vSphere 5.0.
 
 h1. "Version 3 alpha":https://github.com/infochimps/cluster_chef/tree/version_3 now available!
 
