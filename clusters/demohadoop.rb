@@ -5,6 +5,7 @@ ClusterChef.cluster 'demohadoop' do
   cloud do
     backing             "ebs"
     image_name          "maverick"
+    availability_zones  ['us-east-1a']
   end
 
   role                  "big_package"
@@ -13,7 +14,7 @@ ClusterChef.cluster 'demohadoop' do
 
   facet :master do
     instances           1
-    cloud.flavor        "m2.xlarge"
+    cloud.flavor        "m1.small" # "m2.xlarge"
     #
     role                "hadoop"
     role                "hadoop_namenode"
@@ -25,7 +26,7 @@ ClusterChef.cluster 'demohadoop' do
 
   facet :worker do
     instances           2
-    cloud.flavor        "m1.large"
+    cloud.flavor        "m1.small" # "m1.large"
     #
     role                "hadoop"
     role                "hadoop_namenode"

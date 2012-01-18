@@ -26,6 +26,10 @@ class Chef
         :short => "-x USERNAME",
         :long => "--ssh-user USERNAME",
         :description => "The ssh username"
+      option :ssh_password,
+        :short => "-P PASSWORD",
+        :long => "--ssh-password PASSWORD",
+        :description => "The ssh password"        
       option :bootstrap_runs_chef_client,
         :long => "--bootstrap-runs-chef-client",
         :description => "If bootstrap is invoked, will do the initial run of chef-client in the bootstrap script"
@@ -54,7 +58,7 @@ class Chef
 
       def perform_execution target
         target.each do |svr|
-          run_bootstrap(svr, svr.fog_server.dns_name)
+          run_bootstrap(svr, svr.fog_server.ipaddress)
         end
       end
 

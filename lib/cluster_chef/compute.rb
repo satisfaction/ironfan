@@ -35,8 +35,29 @@ module ClusterChef
     #   cloud.security_group :foo
     #
     def cloud cloud_provider=nil, hsh={}, &block
-      raise "Only have ec2 so far" if cloud_provider && (cloud_provider != :ec2)
-      @cloud ||= ClusterChef::Cloud::Ec2.new
+      case cloud_provider
+        when :ec2
+          @cloud ||= ClusterChef::Cloud::Ec2.new
+        when :vsphere
+          @cloud ||= ClusterChef::Cloud::Vsphere.new
+        else
+          @cloud ||= ClusterChef::Cloud::Vsphere.new
+          #raise "Only supports ec2 and vsphere so far"
+      end
+      @cloud.configure(hsh, &block) if block
+      @cloud
+    end
+    
+    def cloud2 cloud_provider=nil, hsh={}, &block
+      #raise "Only have ec2 and vsphere so far" if cloud_provider && (cloud_provider != :vsphere)
+      case cloud_provider
+      when :ec2
+        @cloud ||= ClusterChef::Cloud::Ec2.new
+      when :vsphere
+        @cloud ||= ClusterChef::Cloud::Vsphere.new
+      else
+        @cloud ||= ClusterChef::Cloud::Ec2.new
+      end
       @cloud.configure(hsh, &block) if block
       @cloud
     end

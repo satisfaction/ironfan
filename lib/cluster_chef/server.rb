@@ -22,6 +22,7 @@ module ClusterChef
         "facet"   => facet_name,
         "index"   => facet_index }
       warn("Duplicate server #{[self, facet.name, idx]} vs #{@@all[fullname]}") if @@all[fullname]
+      #Chef::Log.debug("==========\n" + self.inspect + "\n-------------\n"
       @@all[fullname] = self
     end
 
@@ -77,11 +78,13 @@ module ClusterChef
     end
 
     def running?
-      has_cloud_state?('running')
+      #has_cloud_state?('running')
+      has_cloud_state?('poweredOn') # for-vsphere
     end
 
     def startable?
-      has_cloud_state?('stopped')
+      #has_cloud_state?('stopped')
+      has_cloud_state?('poweredOff') # for-vsphere
     end
 
     def launchable?
@@ -181,6 +184,11 @@ module ClusterChef
       server.bogosity :not_defined_in_facet unless had_server
       return server
     end
+    
+    def self.get_by_name(node_name)
+      ( cluster_name, facet_name, facet_index ) = node_name.split(/-/)
+      self.get(cluster_name, facet_name, facet_index)
+    end
 
     def self.all
       @@all
@@ -243,10 +251,15 @@ module ClusterChef
         # :instance_initiated_shutdown_behavior => instance_initiated_shutdown_behavior,
         :availability_zone => self.default_availability_zone,
         :monitoring => cloud.monitoring,
+        
+        # for-vsphere
+        :template_path  => cloud.image_id,
+        :name  =>  fullname,
       }
     end
 
     def create_tags
+      return unless cloud.name == :ec2 # for-vsphere
       return unless created?
       tags = {
         "cluster" => cluster_name,

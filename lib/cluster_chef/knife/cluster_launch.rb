@@ -79,10 +79,12 @@ class Chef
         target.sync_roles
 
         # Make security groups
+#for-vsphere
+=begin        
         puts
         puts "Making security groups:"
         full_target.security_groups.each{|name,group| group.run }
-
+=end
         # Launch servers
         die "Aborting! (--abort given)" if config[:abort]
         puts
@@ -128,12 +130,12 @@ class Chef
 
         # Try SSH
         unless config[:dry_run]
-          nil until tcp_test_ssh(server.fog_server.dns_name){ sleep @initial_sleep_delay ||= 10  }
+          nil until tcp_test_ssh(server.fog_server.ipaddress){ sleep @initial_sleep_delay ||= 10  }
         end
 
         # Run Bootstrap
         if config[:bootstrap]
-          run_bootstrap(server, server.fog_server.dns_name)
+          run_bootstrap(server, server.fog_server.ipaddress)
         end
       end
 

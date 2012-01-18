@@ -44,10 +44,10 @@ class Chef
         target = get_slice(* @name_args)
 
         # Here's how to display the full raw dictionary for testing
-        # ClusterChef::ServerSlice.new(target.cluster, ClusterChef::Server.all.values).display(:detailed)
+        ClusterChef::ServerSlice.new(target.cluster, ClusterChef::Server.all.values).display(:detailed)
 
         # Display same
-        display(target)
+        #display(target)
       end
     end
   end

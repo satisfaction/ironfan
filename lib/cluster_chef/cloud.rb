@@ -52,6 +52,8 @@ module ClusterChef
         super *args
         @settings[:security_groups]      ||= Mash.new
         @settings[:user_data]            ||= Mash.new
+        
+        @name = :ec2;
       end
 
       # An alias for disable_api_termination. Prevents the instance from being
@@ -277,5 +279,42 @@ module ClusterChef
     class Terremark < Base
       # password, username, service
     end
+ 
+    # for-vsphere
+    class Vsphere < Ec2
+      has_keys(
+        :host, :user, :pass, :dc, :templates_folder,
+        :security_groups, :availability_zones, :backing
+      )
+
+      def initialize *args
+        super *args
+        
+        @name = :vsphere;
+      end
+
+      # Utility methods
+
+      def image_info
+        IMAGE_INFO[ [bits, backing, image_name] ] or warn "Make sure to define the machine's region, bits, backing and image_name. (Have #{[region, bits, backing, image_name].inspect})"
+      end
+
+      def flavor_info
+        FLAVOR_INFO[ flavor ] || {} # or raise "Please define the machine's flavor."
+      end
+      
+      FLAVOR_INFO = {
+        't1.micro'    => { :price => 0.02,  :bits => '64-bit', :ram =>    686, :cores => 1, :core_size => 0.25, :inst_disks => 0, :inst_disk_size => 0,   },
+        'm1.small'    => { :price => 0.085, :bits => '32-bit', :ram =>   1024, :cores => 1, :core_size => 1,    :inst_disks => 1, :inst_disk_size => 0, },
+      }
+
+      IMAGE_INFO =  {
+        #
+        # Maverick (Ubuntu 10.10)
+        #
+        %w[ 32-bit  ebs             maverick ] => { :image_id => 'ubuntu-11-10-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-cluster_chef", },
+      }
+    end
+
   end
 end

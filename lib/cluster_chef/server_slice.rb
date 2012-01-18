@@ -153,6 +153,7 @@ module ClusterChef
       # probably not necessary any more
       # servers = servers.sort{ |a,b| (a.facet_name <=> b.facet_name) *9 + (a.facet_index.to_i <=> b.facet_index.to_i)*3 + (a.facet_index <=> b.facet_index) }
       defined_data = servers.map do |svr|
+        puts "------------server to display is : \n" + svr.fog_server.inspect + "---------------\n"
         hsh = {
           "Name"   => svr.fullname,
           "Facet"  => svr.facet_name,
@@ -167,10 +168,10 @@ module ClusterChef
               "Image"      => fs.image_id,
               "AZ"         => fs.availability_zone,
               "SSH Key"    => fs.key_name,
-              "State"      => "[#{fs.state == 'running' ? 'green' : 'blue'}]#{fs.state}[reset]",
+              "State"      => "[#{svr.running? ? 'green' : 'blue'}]#{fs.state}[reset]",
               "Public IP"  => fs.public_ip_address,
               "Private IP" => fs.private_ip_address,
-              "Created At" => fs.created_at.strftime("%Y%m%d-%H%M%S")
+              "Created At" => fs.created_at ? fs.created_at.strftime("%Y%m%d-%H%M%S") : nil
             )
         else
           hsh["State"] = "not running"

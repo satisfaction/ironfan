@@ -23,7 +23,7 @@ class Chef
     class ClusterStop < ClusterChef::Script
       option :yes,
         :long => "--yes",
-        :description => "Skip confirmation that you want to delete the cluster."
+        :description => "Skip confirmation that you want to stop the cluster."
       import_banner_and_options(ClusterChef::Script)
 
       def slice_criterion

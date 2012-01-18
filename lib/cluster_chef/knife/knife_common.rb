@@ -77,12 +77,12 @@ module ClusterChef
       until remaining.empty?
         remaining = remaining.select(&:alive?)
         if config[:verbosity]
-          puts "waiting: #{total - remaining.length} / #{total}, #{(Time.now - start_time).to_i}s"
-          sleep 3
+          puts "waiting for threads to complete: #{total - remaining.length} / #{total}, #{(Time.now - start_time).to_i}s"
+          sleep 30
         else
           ap config
           Formatador.redisplay_progressbar(total - remaining.length, total, {:started_at => start_time })
-          sleep 1
+          sleep 10
         end
       end
       # Collapse the threads
@@ -98,6 +98,7 @@ module ClusterChef
       bootstrap.config[:node]           = node
       bootstrap.config[:run_list]       = node.run_list
       bootstrap.config[:ssh_user]       = config[:ssh_user]       || node.cloud.ssh_user
+      bootstrap.config[:ssh_password]   = config[:ssh_password]
       bootstrap.config[:attribute]      = config[:attribute]
       bootstrap.config[:identity_file]  = config[:identity_file]  || node.cloud.ssh_identity_file
       bootstrap.config[:distro]         = config[:distro]         || node.cloud.bootstrap_distro

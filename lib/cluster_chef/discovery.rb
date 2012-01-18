@@ -11,7 +11,8 @@ module ClusterChef
   protected
 
     def fog_servers
-      @fog_servers ||= ClusterChef.fog_servers.select{|fs| fs.tags["cluster"] == cluster_name.to_s && (fs.state != "terminated") }
+      #@fog_servers ||= ClusterChef.fog_servers.select{|fs| fs.tags["cluster"] == cluster_name.to_s && (fs.state != "terminated") }
+      @fog_servers ||= ClusterChef.fog_servers.select { |fs| fs.is_a_template == false } # for-vsphere
     end
 
     def chef_nodes
@@ -20,6 +21,7 @@ module ClusterChef
       Chef::Search::Query.new.search(:node,"cluster_name:#{cluster_name}") do |n|
         @chef_nodes.push(n) unless n.nil? || (n.cluster_name != cluster_name.to_s)
       end
+puts "chef_nodes are : " + @chef_nodes.inspect + "\n========" 
       @chef_nodes
     end
 
@@ -30,6 +32,7 @@ module ClusterChef
     #   when we discover cloud instances.
     def discover_chef_nodes!
       chef_nodes.each do |chef_node|
+puts "chef_node is : " + chef_node.inspect + "\n========"        
         if (cchef = chef_node['cluster_chef'])
           cluster_name = cchef["cluster"] || cchef["name"]
           facet_name =  cchef["facet"]
@@ -45,7 +48,7 @@ module ClusterChef
         end
         svr = ClusterChef::Server.get(cluster_name, facet_name, facet_index)
         svr.chef_node = chef_node
-        @aws_instance_hash[ chef_node.ec2.instance_id ] = svr if chef_node[:ec2] && chef_node.ec2.instance_id
+        @aws_instance_hash[ chef_node.ec2.instance_id ] = svr # if chef_node[:ec2] && chef_node.ec2.instance_id
       end
     end
 
@@ -60,8 +63,10 @@ module ClusterChef
       # Otherwise, try to get to it through mapping the aws instance id
       # to the chef node name found in the chef node
       fog_servers.each do |fs|
-        if fs.tags["cluster"] && fs.tags["facet"] && fs.tags["index"] && fs.tags["cluster"] == cluster_name.to_s
+        if fs.tags && fs.tags["cluster"] && fs.tags["facet"] && fs.tags["index"] && fs.tags["cluster"] == cluster_name.to_s
           svr = ClusterChef::Server.get(fs.tags["cluster"], fs.tags["facet"], fs.tags["index"])
+        elsif fs.name.start_with?(cluster_name.to_s + '-') # for-vsphere
+          svr = ClusterChef::Server.get_by_name(fs.name)
         elsif @aws_instance_hash[fs.id]
           svr = @aws_instance_hash[fs.id]
         else
@@ -94,12 +99,27 @@ module ClusterChef
   end
 
   def self.connection
-    @connection ||= Fog::Compute.new({
+    # for-vsphere
+    case :vsphere
+    when :ec2
+      @connection ||= Fog::Compute.new({
         :provider              => 'AWS',
         :aws_access_key_id     => Chef::Config[:knife][:aws_access_key_id],
         :aws_secret_access_key => Chef::Config[:knife][:aws_secret_access_key],
         #  :region                => region
       })
+    when :vsphere
+      @connection ||= Fog::Compute.new({
+        :provider => "vsphere", 
+        :vsphere_username => Chef::Config[:knife][:vsphere_username], 
+        :vsphere_password => Chef::Config[:knife][:vsphere_password],
+        :vsphere_server => Chef::Config[:knife][:vsphere_server], 
+        :vsphere_expected_pubkey_hash => Chef::Config[:knife][:vsphere_expected_pubkey_hash],
+        :vsphere_templates_folder => Chef::Config[:knife][:vsphere_templates_folder],
+        })
+    else
+      raise 'no cloud name specified.'
+    end
   end
 
   def self.fog_servers
