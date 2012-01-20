@@ -21,7 +21,6 @@ module ClusterChef
       Chef::Search::Query.new.search(:node,"cluster_name:#{cluster_name}") do |n|
         @chef_nodes.push(n) unless n.nil? || (n.cluster_name != cluster_name.to_s)
       end
-puts "chef_nodes are : " + @chef_nodes.inspect + "\n========" 
       @chef_nodes
     end
 
@@ -48,7 +47,7 @@ puts "chef_node is : " + chef_node.inspect + "\n========"
         end
         svr = ClusterChef::Server.get(cluster_name, facet_name, facet_index)
         svr.chef_node = chef_node
-        @aws_instance_hash[ chef_node.ec2.instance_id ] = svr # if chef_node[:ec2] && chef_node.ec2.instance_id
+        @aws_instance_hash[ chef_node.ec2.instance_id ] = svr if chef_node && chef_node[:ec2] && chef_node.ec2.instance_id
       end
     end
 
