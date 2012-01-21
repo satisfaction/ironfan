@@ -43,7 +43,11 @@ default[:groups]['mapred'    ][:gid] = 303
 #
 default[:hadoop][:use_root_as_scratch_vol]    = true
 default[:hadoop][:use_root_as_persistent_vol] = false
-default[:hadoop][:ignore_ebs_volumes]         = false
+#default[:hadoop][:ignore_ebs_volumes]         = false
+# Use local disk
+default[:hadoop][:ignore_ebs_volumes] = true
+default[:hadoop][:use_root_as_scratch_vol] = true
+default[:hadoop][:local_disks] = {}
 
 # Extra directories for the Namenode metadata to persist to, for example an
 # off-cluster NFS path (only necessary to use if you have a physical cluster)
@@ -85,7 +89,9 @@ default[:hadoop][:max_balancer_bandwidth]     = 1048576  # bytes per second -- 1
 # Also, make sure you're
 #
 hadoop_performance_settings =
-  case node[:ec2][:instance_type]
+  Chef::Log.info('------------ hadoop node is: \n'); pp node;
+  instance_type = node[:ec2] ? node[:ec2][:instance_type] : nil
+  case instance_type
   when 'm1.small'   then { :max_map_tasks =>  2, :max_reduce_tasks => 1, :java_child_opts =>  '-Xmx870m',                                                    :java_child_ulimit =>  2227200, :io_sort_factor => 10, :io_sort_mb => 160, }
   when 'c1.medium'  then { :max_map_tasks =>  3, :max_reduce_tasks => 2, :java_child_opts =>  '-Xmx870m',                                                    :java_child_ulimit =>  2227200, :io_sort_factor => 10, :io_sort_mb => 160, }
   when 'm1.large'   then { :max_map_tasks =>  3, :max_reduce_tasks => 2, :java_child_opts => '-Xmx2432m -XX:+UseCompressedOops -XX:MaxNewSize=200m -server', :java_child_ulimit =>  7471104, :io_sort_factor => 25, :io_sort_mb => 256, }
@@ -106,6 +112,7 @@ hadoop_performance_settings =
     { :max_map_tasks => n_mappers, :max_reduce_tasks => n_reducers, :java_child_opts => "-Xmx#{heap_size}m", :java_child_ulimit => child_ulimit, :io_sort_factor => 10, :io_sort_mb => 100, }
   end
 
+=begin
 hadoop_performance_settings[:local_disks]=[]
 [ [ '/mnt',  'block_device_mapping_ephemeral0'],
   [ '/mnt2', 'block_device_mapping_ephemeral1'],
@@ -118,11 +125,11 @@ hadoop_performance_settings[:local_disks]=[]
   hadoop_performance_settings[:local_disks] << [mnt, dev_str]
 end
 Chef::Log.info(["Hadoop mapreduce tuning", hadoop_performance_settings].inspect)
-
+=end
 hadoop_performance_settings.each{|k,v| set[:hadoop][k] = v }
 
 # You may wish to set the following to the same as your HDFS block size, esp if
 # you're seeing issues with s3:// turning 1TB files into 30_000+ map tasks
-default[:hadoop][:min_split_size] = (128 * 1024 * 1024)
+# default[:hadoop][:min_split_size] = (128 * 1024 * 1024)
 # default[:hadoop][:s3_block_size]  = (128 * 1024 * 1024)
 # default[:hadoop][:dfs_block_size] = (128 * 1024 * 1024)

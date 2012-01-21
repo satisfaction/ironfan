@@ -69,6 +69,7 @@ module ClusterServiceDiscovery
     node.set[:provides_service][service_name] = {
       :timestamp  => ClusterServiceDiscovery.timestamp,
     }.merge(service_info)
+p ['================node to be saved: \n' , node.run_list.run_list]    
     node.save
   end
 

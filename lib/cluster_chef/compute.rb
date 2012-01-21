@@ -42,21 +42,7 @@ module ClusterChef
           @cloud ||= ClusterChef::Cloud::Vsphere.new
         else
           @cloud ||= ClusterChef::Cloud::Vsphere.new
-          #raise "Only supports ec2 and vsphere so far"
-      end
-      @cloud.configure(hsh, &block) if block
-      @cloud
-    end
-    
-    def cloud2 cloud_provider=nil, hsh={}, &block
-      #raise "Only have ec2 and vsphere so far" if cloud_provider && (cloud_provider != :vsphere)
-      case cloud_provider
-      when :ec2
-        @cloud ||= ClusterChef::Cloud::Ec2.new
-      when :vsphere
-        @cloud ||= ClusterChef::Cloud::Vsphere.new
-      else
-        @cloud ||= ClusterChef::Cloud::Ec2.new
+          # raise "Only supports ec2 and vsphere so far" if @cloud.nil?
       end
       @cloud.configure(hsh, &block) if block
       @cloud

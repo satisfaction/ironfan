@@ -31,7 +31,7 @@ module ClusterChef
     #   when we discover cloud instances.
     def discover_chef_nodes!
       chef_nodes.each do |chef_node|
-puts "chef_node is : " + chef_node.inspect + "\n========"        
+      Chef::Log.info('------------ discovered chef_node is: \n'); pp chef_node;      
         if (cchef = chef_node['cluster_chef'])
           cluster_name = cchef["cluster"] || cchef["name"]
           facet_name =  cchef["facet"]

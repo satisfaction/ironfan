@@ -59,7 +59,7 @@ exec chpst -u${CASSANDRA_USER} -e /etc/sv/cassandra/env -o 65535 \
       -verbose:gc                                               \
       -Xloggc:/var/log/cassandra/cassandra-gc.log               \
 <%- end %>
-      -Djava.rmi.server.hostname=<%= node[:ec2][:public_hostname] %> \
+      -Djava.rmi.server.hostname=<%= node['ipaddress'] %> \
       -Dcom.sun.management.jmxremote.port=<%= node[:cassandra][:jmx_port] %> \
       -Dcom.sun.management.jmxremote.ssl=false                  \
       -Dcom.sun.management.jmxremote.authenticate=false         \

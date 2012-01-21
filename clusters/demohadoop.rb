@@ -8,7 +8,7 @@ ClusterChef.cluster 'demohadoop' do
     availability_zones  ['us-east-1a']
   end
 
-  role                  "big_package"
+  # role                  "big_package"
   role                  "nfs_client"
   recipe                "cluster_chef::dedicated_server_tuning"
 

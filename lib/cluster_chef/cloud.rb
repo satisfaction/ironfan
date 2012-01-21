@@ -296,7 +296,7 @@ module ClusterChef
       # Utility methods
 
       def image_info
-        IMAGE_INFO[ [bits, backing, image_name] ] or warn "Make sure to define the machine's region, bits, backing and image_name. (Have #{[region, bits, backing, image_name].inspect})"
+        IMAGE_INFO[ [bits, image_name] ] or warn "Make sure to define the machine's region, bits, backing and image_name. (Have #{[region, bits, backing, image_name].inspect})"
       end
 
       def flavor_info
@@ -312,7 +312,7 @@ module ClusterChef
         #
         # Maverick (Ubuntu 10.10)
         #
-        %w[ 32-bit  ebs             maverick ] => { :image_id => 'ubuntu-11-10-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+        %w[ 32-bit  maverick ] => { :image_id => 'ubuntu-11-10-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
       }
     end
 
