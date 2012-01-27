@@ -71,29 +71,20 @@ class Chef
 
         die("", "#{h.color("All servers are running -- not launching any.",:blue)}", "", 1) if target.empty?
 
-        # We need to dummy up a key_pair in simulation mode, not doing it fr'eals
-        # You must to do this manually in real life -- must save the file, etc.
-        if config[:dry_run] then ClusterChef.connection.key_pairs.create(:name => target.cluster.name) ; end
-
-        # This will create/update any roles
-        target.sync_roles
-
-        # Make security groups
-#for-vsphere
-=begin        
-        puts
-        puts "Making security groups:"
-        full_target.security_groups.each{|name,group| group.run }
-=end
         # Launch servers
-        die "Aborting! (--abort given)" if config[:abort]
         puts
-        puts "Launching machines:"
+        puts "Creating machines in Cloud:"
         target.create_servers
 
         # This will create/update any roles
         target.sync_roles
 
+        # for-vsphere
+        # Pre-populate information in chef
+        ui.info("Sync'ing to chef and cloud")
+        target.sync_to_cloud
+        target.sync_to_chef
+        
         puts
         display(target)
 
@@ -116,22 +107,18 @@ class Chef
       end
 
       def perform_after_launch_tasks(server)
-        # Hook up external assets
-        server.create_tags
-
-        # Pre-populate information in chef
-        server.sync_to_chef
-
         # Wait for node creation on amazon side
         server.fog_server.wait_for{ ready? }
-
-        # Attach volumes, etc
-        server.sync_to_cloud
 
         # Try SSH
         unless config[:dry_run]
           nil until tcp_test_ssh(server.fog_server.ipaddress){ sleep @initial_sleep_delay ||= 10  }
         end
+
+        # Attach volumes, etc
+        server.sync_to_cloud
+        # Save node to chef
+        server.sync_to_chef
 
         # Run Bootstrap
         if config[:bootstrap]

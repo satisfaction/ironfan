@@ -153,12 +153,11 @@ module ClusterChef
       # probably not necessary any more
       # servers = servers.sort{ |a,b| (a.facet_name <=> b.facet_name) *9 + (a.facet_index.to_i <=> b.facet_index.to_i)*3 + (a.facet_index <=> b.facet_index) }
       defined_data = servers.map do |svr|
-        puts "------------server to display is : \n" + svr.fog_server.inspect + "---------------\n"
         hsh = {
           "Name"   => svr.fullname,
           "Facet"  => svr.facet_name,
           "Index"  => svr.facet_index,
-          "Chef?"  => (svr.chef_node ? "yes" : "[red]no[reset]"),
+          "Chef?"  => (svr.in_chef? ? "yes" : "[red]no[reset]"),
           "Bogus"  => (svr.bogus? ? "[red]#{svr.bogosity}[reset]" : '')
         }
         if (fs = svr.fog_server)

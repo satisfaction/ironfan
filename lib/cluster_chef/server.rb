@@ -22,8 +22,9 @@ module ClusterChef
         "facet"   => facet_name,
         "index"   => facet_index }
       warn("Duplicate server #{[self, facet.name, idx]} vs #{@@all[fullname]}") if @@all[fullname]
-      #Chef::Log.debug("==========\n" + self.inspect + "\n-------------\n"
       @@all[fullname] = self
+      
+      @chef_node ||= Chef::Node.load( fullname ) # load chef_node # for-vsphere
     end
 
     def fullname name=nil
@@ -199,19 +200,20 @@ module ClusterChef
     #
 
     def sync_to_cloud
-      attach_volumes
-      create_tags
-      associate_elastic_ip
+      # these calls are only for :ec2  # for-vsphere
+      #attach_volumes
+      #create_tags
+      #associate_elastic_ip
     end
 
     def sync_to_chef
-      chef_node ||= Chef::Node.load( fullname )
-      chef_node.run_list = Chef::RunList.new(*@settings[:run_list])
+      @chef_node ||= Chef::Node.load( fullname )
+      @chef_node.run_list = Chef::RunList.new(*@settings[:run_list])
       chef_attributes.each_pair do |key,value|
         next if key == :run_list
-        chef_node.normal[key] = value
+        @chef_node.normal[key] = value
       end
-      chef_node.save
+      @chef_node.save
       true
     rescue Net::HTTPServerException => e
       raise unless e.response.code == '404'

@@ -56,6 +56,7 @@ module ClusterChef
       puts
       puts "Finished!"
       puts
+      target.sync_to_cloud
       display(target)
     end
 

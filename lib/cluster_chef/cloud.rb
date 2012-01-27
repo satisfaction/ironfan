@@ -312,7 +312,12 @@ module ClusterChef
         #
         # Maverick (Ubuntu 10.10)
         #
-        %w[ 32-bit  maverick ] => { :image_id => 'ubuntu-11-10-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+        %w[ 32-bit  maverick ] => { :image_id => 'ubuntu-10-04-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+        #
+        # Oneiric (Ubuntu 11.10)
+        #
+        %w[ 32-bit  oneiric  ] => { :image_id => 'ubuntu-11-10-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu11.10-gems", },
+
       }
     end
 

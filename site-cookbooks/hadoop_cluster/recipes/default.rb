@@ -18,6 +18,7 @@
 #
 
 include_recipe "java"
+
 class Chef::Recipe; include HadoopCluster ; end
 
 #

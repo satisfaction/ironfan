@@ -2,7 +2,7 @@
 default[:hadoop][:hadoop_handle] = 'hadoop-0.20'
 default[:hadoop][:cdh_version]   = 'cdh3b3'
 default[:hadoop][:deb_version]   = "0.20.2+737-1~lucid-cdh3b3"
-default[:hadoop][:cloudera_distro_name] = nil # in case cloudera doesn't have you distro yet
+default[:hadoop][:cloudera_distro_name] = nil # 'lucid'  # in case cloudera doesn't have you distro yet
 
 # Make sure you define a cluster_size in roles/WHATEVER_cluster.rb
 default[:cluster_size] = 5
@@ -89,7 +89,6 @@ default[:hadoop][:max_balancer_bandwidth]     = 1048576  # bytes per second -- 1
 # Also, make sure you're
 #
 hadoop_performance_settings =
-  Chef::Log.info('------------ hadoop node is: \n'); pp node;
   instance_type = node[:ec2] ? node[:ec2][:instance_type] : nil
   case instance_type
   when 'm1.small'   then { :max_map_tasks =>  2, :max_reduce_tasks => 1, :java_child_opts =>  '-Xmx870m',                                                    :java_child_ulimit =>  2227200, :io_sort_factor => 10, :io_sort_mb => 160, }
@@ -112,6 +111,7 @@ hadoop_performance_settings =
     { :max_map_tasks => n_mappers, :max_reduce_tasks => n_reducers, :java_child_opts => "-Xmx#{heap_size}m", :java_child_ulimit => child_ulimit, :io_sort_factor => 10, :io_sort_mb => 100, }
   end
 
+# for-vsphere
 =begin
 hadoop_performance_settings[:local_disks]=[]
 [ [ '/mnt',  'block_device_mapping_ephemeral0'],
