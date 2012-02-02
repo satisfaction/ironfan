@@ -74,7 +74,7 @@ class Chef
         # Launch servers
         puts
         puts "Creating machines in Cloud:"
-        target.create_servers
+        target.create_servers(true)
 
         # This will create/update any roles
         target.sync_roles

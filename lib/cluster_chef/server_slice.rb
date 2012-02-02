@@ -97,11 +97,11 @@ module ClusterChef
       delegate_to_fog_servers( :reload  )
     end
 
-    def create_servers
-      delegate_to_servers( :create_server )
+    def create_servers( threaded = false )
+      delegate_to_servers( :create_server, threaded )
     end
 
-    def delete_chef( delete_clients = true, delete_nodes = true)
+    def delete_chef( delete_clients = true, delete_nodes = true )
       servers.each do |svr|
         next unless svr.chef_node
         node = svr.chef_node
