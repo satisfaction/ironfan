@@ -147,7 +147,7 @@ module ClusterChef
         :cluster_role_index => facet_index,
         :facet_index => facet_index,
         :cluster_name => cluster_name,
-        :cluster_role => facet_name,
+        :cluster_role => cluster_role,
         :facet_name   => facet_name,
         :cluster_chef => {
           :cluster => cluster_name,

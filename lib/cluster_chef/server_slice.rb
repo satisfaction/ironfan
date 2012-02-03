@@ -173,7 +173,7 @@ module ClusterChef
               "Created At" => fs.created_at ? fs.created_at.strftime("%Y%m%d-%H%M%S") : nil
             )
         else
-          hsh["State"] = "not running"
+          hsh["State"] = "not exist"
         end
         hsh['Volumes'] = []
         svr.composite_volumes.each do |name, vol|
