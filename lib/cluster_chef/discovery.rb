@@ -30,8 +30,7 @@ module ClusterChef
     # * if the chef node knows about its instance id, memorize that for lookup
     #   when we discover cloud instances.
     def discover_chef_nodes!
-      chef_nodes.each do |chef_node|
-      Chef::Log.info('------------ discovered chef_node is: \n'); pp chef_node;      
+      chef_nodes.each do |chef_node| 
         if (cchef = chef_node['cluster_chef'])
           cluster_name = cchef["cluster"] || cchef["name"]
           facet_name =  cchef["facet"]
