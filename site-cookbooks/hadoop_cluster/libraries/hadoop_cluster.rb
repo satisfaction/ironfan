@@ -66,12 +66,12 @@ module HadoopCluster
 
   def persistent_hadoop_dirs
     if node[:hadoop][:ignore_ebs_volumes] or cluster_ebs_volumes.nil?
-      (['/mnt/hadoop'] + local_hadoop_dirs).uniq
+      dirs = (['/mnt/hadoop'] + local_hadoop_dirs).uniq
     else
       dirs = cluster_ebs_volumes.map{|vol_info| vol_info['mount_point']+'/hadoop' }
-      dirs.unshift('/mnt/hadoop') if node[:hadoop][:use_root_as_persistent_vol]
-      dirs.uniq
     end
+    dirs.unshift('/mnt/hadoop') if node[:hadoop][:use_root_as_persistent_vol]
+    dirs.uniq
   end
 
   def cluster_ebs_volumes_are_mounted?
