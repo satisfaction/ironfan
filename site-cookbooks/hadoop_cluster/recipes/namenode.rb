@@ -32,5 +32,7 @@ end
 # 'service hadoop-0.20-namenode start' launchs the hadoop process then return without ensuring all listening ports are up.
 puts 'Wait until namenode service starts listening at ports 8020 and 50070'
 sleep 10
-# register with cluster_service_discovery
+# Set hdfs permission
+include_recipe "hadoop_cluster::bootstrap_hdfs_dirs"
+# Register with cluster_service_discovery
 provide_service ("#{node[:cluster_name]}-namenode")
