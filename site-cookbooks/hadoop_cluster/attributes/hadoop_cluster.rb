@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 default[:hadoop][:hadoop_handle] = 'hadoop-0.20'
-default[:hadoop][:cdh_version]   = 'cdh3b3'
-default[:hadoop][:deb_version]   = "0.20.2+737-1~lucid-cdh3b3"
+default[:hadoop][:cdh_version]   = 'cdh3u3'
+default[:hadoop][:deb_version]   = "0.20.2+923.194-1~lucid-cdh3"
 default[:hadoop][:cloudera_distro_name] = nil # 'lucid'  # in case cloudera doesn't have you distro yet
 
 # Make sure you define a cluster_size in roles/WHATEVER_cluster.rb
-default[:cluster_size] = 5
+default[:cluster_size] = 2
 
-default[:hadoop][:dfs_replication             ] =  3
+default[:hadoop][:dfs_replication             ] =  1
 default[:hadoop][:reduce_parallel_copies      ] =  7
 default[:hadoop][:tasktracker_http_threads    ] = 40
 default[:hadoop][:jobtracker_handler_count    ] = [node[:cluster_size] * 4, 32].min
@@ -41,12 +41,10 @@ default[:groups]['mapred'    ][:gid] = 303
 # For ebs-backed volumes (or in general, machines with small or slow root
 # volumes), you may wish to exclude the root volume from consideration
 #
-default[:hadoop][:use_root_as_scratch_vol]    = true
-default[:hadoop][:use_root_as_persistent_vol] = false
-#default[:hadoop][:ignore_ebs_volumes]         = false
+default[:hadoop][:ignore_ebs_volumes]         = true
 # Use local disk
-default[:hadoop][:ignore_ebs_volumes] = true
-default[:hadoop][:use_root_as_scratch_vol] = true
+default[:hadoop][:use_root_as_scratch_vol]    = true
+default[:hadoop][:use_root_as_persistent_vol] = true
 default[:hadoop][:local_disks] = {}
 
 # Extra directories for the Namenode metadata to persist to, for example an
@@ -89,7 +87,7 @@ default[:hadoop][:max_balancer_bandwidth]     = 1048576  # bytes per second -- 1
 # Also, make sure you're
 #
 hadoop_performance_settings =
-  instance_type = node[:ec2] ? node[:ec2][:instance_type] : nil
+  instance_type = node[:ec2] ? node[:ec2][:instance_type] : 'm1.small'
   case instance_type
   when 'm1.small'   then { :max_map_tasks =>  2, :max_reduce_tasks => 1, :java_child_opts =>  '-Xmx870m',                                                    :java_child_ulimit =>  2227200, :io_sort_factor => 10, :io_sort_mb => 160, }
   when 'c1.medium'  then { :max_map_tasks =>  3, :max_reduce_tasks => 2, :java_child_opts =>  '-Xmx870m',                                                    :java_child_ulimit =>  2227200, :io_sort_factor => 10, :io_sort_mb => 160, }
