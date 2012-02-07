@@ -21,9 +21,10 @@ template_variables = {
   :all_cluster_volumes    => all_cluster_volumes,
   :cluster_ebs_volumes    => cluster_ebs_volumes,
   :ganglia                => provider_for_service("#{node[:cluster_name]}-gmetad"),
-  :ganglia_address           => provider_private_ip("#{node[:cluster_name]}-gmetad"),
+  :ganglia_address        => provider_private_ip("#{node[:cluster_name]}-gmetad"),
   :ganglia_port           => 8649,
 }
+
 Chef::Log.debug template_variables.inspect
 %w[raw_settings.yaml core-site.xml fairscheduler.xml hdfs-site.xml mapred-site.xml hadoop-metrics.properties].each do |conf_file|
   template "/etc/hadoop/conf/#{conf_file}" do
@@ -61,4 +62,10 @@ end
 execute 'fix_hadoop_env-ssh' do
   command %Q{sed -i -e 's|# export HADOOP_SSH_OPTS=.*|export HADOOP_SSH_OPTS="-o StrictHostKeyChecking=no"| ' #{hadoop_env_file}}
   not_if "grep 'export HADOOP_SSH_OPTS=\"-o StrictHostKeyChecking=no\"' #{hadoop_env_file}"
+end
+
+# Set JAVA_HOME in hadoop-env.sh
+execute 'set JAVA_HOME in hadoop-env.sh' do
+  command %Q{sed -i -e 's|# export JAVA_HOME=.*|export JAVA_HOME=/usr/lib/jvm/java-6-sun| ' #{hadoop_env_file}}
+  not_if "grep '^export JAVA_HOME=' #{hadoop_env_file}"
 end
