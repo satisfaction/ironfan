@@ -42,6 +42,39 @@ cat <<'EOP'
 EOP
 ) > /etc/chef/client.rb
 
+<%# BEGIN  adding dns to ip mappings in /etc/hosts for VMs in Aurora Network. %>
+grep example.aurora /etc/resolv.conf
+if [ $? -eq 0 ]; then
+
+dhcpname=<%= [@config[:node].cluster_name, @config[:node].facet_name, @config[:node].facet_index].join('-') %>
+echo "setting hostname to $dhcpname" # something like 'clustername-namenode-0'
+echo $dhcpname > /etc/hostname
+hostname $dhcpname
+dhclient
+
+<%
+require 'chef/knife'
+domain = '.example.aurora'
+hosts = {}
+servers = ClusterChef.slice(@config[:node].cluster_name).servers
+servers.each do |chef_server|
+  svr = chef_server.fog_server
+  hosts[svr.name] = "#{svr.public_ip_address}  #{svr.name}#{domain}  #{svr.name}"
+end
+%>
+echo "adding dns to ip mappings in /etc/hosts for VMs in Aurora Network."
+<% hosts.map do |hostname, mapping| %>
+grep -q <%= hostname %> /etc/hosts
+if [ $? -ne 0 ]; then
+  echo "adding <%= mapping %> into /etc/hosts"
+  echo "<%= mapping %>" >> /etc/hosts
+fi
+
+<% end %>
+fi
+<%# END %> 
+
+<%# BEGIN  generating private key for the new client to avoid 401 error when bootstrapping chef nodes %>
 <% 
 require 'chef/api_client'
 private_key = nil
@@ -66,6 +99,7 @@ EOP
 ) > /etc/chef/client.pem
 chmod 600 /etc/chef/client.pem
 <% end -%>
+<%# END %> 
 
 (
 cat <<'EOP'
