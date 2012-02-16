@@ -51,9 +51,27 @@ module ClusterServiceDiscovery
   # in descending order of when they registered.
   #
   def all_providers_for_service service_name
-    search(:node, "provides_service:#{service_name}" ).
+    servers = search(:node, "provides_service:#{service_name}").
       find_all{|server| server[:provides_service][service_name] && server[:provides_service][service_name]['timestamp'] }.
       sort_by{|server| server[:provides_service][service_name]['timestamp'] } rescue []
+    Chef::Log.info("search(:node, 'provides_service:#{service_name}') returns #{servers.count} nodes.")
+
+    # Typically when bootstrap the chef node for the first time, the chef node registers itself to provide some service,
+    # but the Chef Search Server is not faster enough to build index for newly added node property(e.g. 'provides_service'),
+    # so it will return no results for search(:node, "provides_service:#{service_name}").
+    # If so, try searching by property 'cluster_name' and 'role' instead.
+    if servers.empty?
+      (cluster, hyphen, service) = service_name.rpartition('-')
+      servers = search(:node, "cluster_name:#{cluster} AND role:hadoop_#{service}")
+      Chef::Log.info("search(:node, 'cluster_name:#{cluster} AND role:hadoop_#{service}') returns #{servers.count} nodes.")
+    end
+    # In case still no results, should try retrieving all chef nodes of this cluster then do a filtering by role.
+    # This approach causes heavier overload than the approach using search()
+    if servers.empty?
+      # TODO: not implemented yet
+    end
+
+    servers
   end
 
   # Find the most recent node that registered to provide the given service
