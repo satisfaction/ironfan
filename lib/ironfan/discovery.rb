@@ -149,13 +149,13 @@ module Ironfan
       })
     when :vsphere
       @fog_connection ||= Fog::Compute.new({
-        :provider => "vsphere", 
-        :vsphere_username => Chef::Config[:knife][:vsphere_username], 
+        :provider => "vsphere",
+        :vsphere_username => Chef::Config[:knife][:vsphere_username],
         :vsphere_password => Chef::Config[:knife][:vsphere_password],
-        :vsphere_server => Chef::Config[:knife][:vsphere_server], 
+        :vsphere_server => Chef::Config[:knife][:vsphere_server],
         :vsphere_expected_pubkey_hash => Chef::Config[:knife][:vsphere_expected_pubkey_hash],
         :vsphere_templates_folder => Chef::Config[:knife][:vsphere_templates_folder],
-        })
+      })
     else
       raise 'no cloud name specified.'
     end

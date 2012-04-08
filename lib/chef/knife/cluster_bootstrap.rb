@@ -30,7 +30,7 @@ class Chef
       option :ssh_password,
         :short => "-P PASSWORD",
         :long => "--ssh-password PASSWORD",
-        :description => "The ssh password"        
+        :description => "The ssh password"
       option :bootstrap_runs_chef_client,
         :long        => "--[no-]bootstrap-runs-chef-client",
         :description => "If bootstrap is invoked, the bootstrap script causes an initial run of chef-client (default true).",

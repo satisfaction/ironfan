@@ -36,7 +36,7 @@ module Ironfan
     #     region         'us-east-1d'
     #   end
     #
-    def cloud cloud_provider=nil, hsh={}, &block                                    
+    def cloud cloud_provider=nil, hsh={}, &block
       case cloud_provider
         when :ec2
           @cloud ||= Ironfan::Cloud::Ec2.new(self)

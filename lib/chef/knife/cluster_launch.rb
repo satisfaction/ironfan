@@ -69,7 +69,6 @@ class Chef
 
         warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
 
-        target.sync_to_cloud
         die("", "#{ui.color("All servers are running -- not launching any.",:blue)}", "", 1) if target.empty?
 
         # Pre-populate information in chef
