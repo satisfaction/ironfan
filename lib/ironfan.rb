@@ -114,6 +114,69 @@ module Ironfan
   end
 
   #
+  # Create a cluster under Ironfan.cluster_path and return the cluster it defines.
+  #
+  # @param [String] cluster_def_file -- full path of the file containing the cluster definition in json format.
+  # @param overwrite -- whether overwrite existing cluster file.
+  #
+  # @return [Ironfan::Cluster] the created cluster.
+  #
+  def self.create_cluster(cluster_def_file, overwrite = false)
+    raise ArgumentError, "Please supply a cluster definition file" if cluster_def_file.to_s.empty?
+
+    # get cluster definition from json file
+    cluster_def = JSON.parse(File.read(cluster_def_file))
+    cluster_name = cluster_def['name']
+    die("'name' of cluster is not specified in #{cluster_def_file}") if !cluster_name
+
+    # check whether target cluster file exists
+    cluster_filename = cluster_filenames[cluster_name]
+    if cluster_filename and !overwrite
+      die("Cluster #{cluster_name} already exists in #{cluster_filename}. Aborted.")
+    end
+
+    # create new Cluster object
+    cluster = Ironfan.cluster(cluster_name)
+    cluster.cloud :vsphere
+    cluster.cloud.flavor "m1.small"
+    cluster.cloud.backing "instance"
+    cluster.cloud.availability_zones ['us-east-1a']
+
+    cluster_def.each { |key, value|
+      case key
+      when 'template_id'
+        cluster.cloud.image_name value
+      when 'roles'
+        value.each { |role|
+          cluster.role role
+        }
+      when 'groups'
+        facets = cluster_def[key]
+        facets.each { |facet_def|
+          facet = cluster.facet(facet_def['name'])
+          facet_def.each { |key, value|
+            case key
+            when 'template_id'
+              facet.cloud(:vsphere).image_name value
+            when 'instance_num'
+              facet.instances value
+            when 'roles'
+              value.each { |role|
+                facet.role role
+              }
+            end
+          }
+        }
+      end
+    }
+
+    # save Cluster object
+    cluster.save
+
+    load_cluster(cluster_name)
+  end
+
+  #
   # Utility to die with an error message.
   # If the last arg is an integer, use it as the exit code.
   #

@@ -8,6 +8,7 @@ module Ironfan
 
     def initialize(name, attrs={})
       super(name.to_sym, attrs)
+      @cluster           = self
       @facets            = Mash.new
       @chef_roles        = []
       environment          :_default if environment.blank?
@@ -96,6 +97,49 @@ module Ironfan
     #
     def resolve!
       facets.values.each(&:resolve!)
+    end
+
+    #
+    # Render cluster meta info as a String.
+    #
+    # @return [String] the cluster meta info as a String.
+    #
+    def render()
+      @@CLUSTER_TEMPLATE ||= %q{
+Ironfan.cluster <%= @cluster.name.to_s.inspect %> do
+
+  cloud <%= @cloud.name.inspect %> do
+    image_name <%= @cloud.image_name.inspect %>
+    flavor <%= @cloud.flavor.inspect %>
+    backing <%= @cloud.backing.inspect %>
+    availability_zones <%= @cloud.availability_zones.inspect %>
+  end
+
+  <% @facets.each { |name, facet| %>
+  facet <%= facet.name.inspect %> do
+    instances <%= facet.instances.inspect %>
+    <% facet.run_list.each { |item| %>
+    <%= item.sub('[', ' "').sub(']', '"') %><% } %>
+  end
+  <% } %>
+end
+}
+      ERB.new(@@CLUSTER_TEMPLATE).result(binding)
+    end
+
+    #
+    # Save cluster meta info into the cluster definition file.
+    #
+    # @param [String] filename -- the full path of the file into which to save cluster meta info.
+    #
+    # @return [Ironfan::Cluster] the cluster.
+    #
+    def save(filename = nil)
+      filename ||= File.join(Ironfan.cluster_path.first, "#{cluster_name}.rb")
+      Chef::Log.debug("Writing cluster meta info into #{filename}")
+      File.open(filename, 'w').write(render)
+
+      self
     end
 
   protected

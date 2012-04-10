@@ -1,0 +1,49 @@
+{
+  "channel_id": "channel_1",
+  "name": "hadoop_cluster_test",
+  "template_id": "centos5",
+  "groups": [
+    {
+      "name": "master",
+      "roles": ["hadoop", "hadoop_namenode", "hadoop_jobtracker"],
+      "instance_num": 1,
+      "cpu": 2, // CPU core number
+      "memory": 2048, // 2048M
+      "networking": {
+        "port_group": "CFNetwork"
+      },
+      "storage": {
+        "type": "shared",
+        "size": 10 // 10G
+      }
+    },
+    {
+      "name": "worker",
+      "roles": ["hadoop", "hadoop_worker"],
+      "instance_num": 3,
+      "cpu": 1,
+      "memory": 1024,
+      "networking": {
+        "port_group": "CFNetwork"
+      },
+      "storage": {
+        "type": "shared",
+        "size": 50
+      }
+    },
+    {
+      "name": "client",
+      "roles": ["hadoop", "hive", "pig"],
+      "instance_num": 1,
+      "cpu": 1,
+      "memory": 1024,
+      "networking": {
+        "port_group": "CFNetwork"
+      },
+      "storage": {
+        "type": "shared",
+        "size": 50
+      }
+    }
+  ]
+}

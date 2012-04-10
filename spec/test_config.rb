@@ -2,16 +2,18 @@ current_dir   = File.expand_path('~/.chef')
 organization  = 'infochimps'
 username      = 'mrflip'
 
-cookbook_root = ENV['PATH_TO_COOKBOOK_REPOS'] || File.expand_path('~/ics/sysadmin')
+cookbook_root = ENV['PATH_TO_COOKBOOK_REPOS'] || File.expand_path('../../ironfan-homebase', File.dirname(__FILE__))
 
-ironfan_path       File.expand_path(cookbook_root+'/ironfan')
-keypair_path            File.expand_path(current_dir+"/keypairs")
+ironfan_path       File.expand_path(cookbook_root + '/../ironfan')
+keypair_path       File.expand_path(current_dir + "/keypairs")
+
 cookbook_path    [
-  "ironfan/cookbooks",         "ironfan/site-cookbooks",
+  "cookbooks", "vendor/vmware/cookbooks"
   ].map{|path| File.join(cookbook_root, path) }
+
 cluster_path     [
-  'ironfan/clusters',
-  ].map{|path| File.join(cookbook_root, path) }
+  "spec/data/clusters",
+  ].map{|path| File.join(ironfan_path, path) }
 
 node_name                username
 validation_client_name   "chef-validator"
