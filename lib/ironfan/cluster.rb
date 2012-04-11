@@ -115,13 +115,13 @@ Ironfan.cluster <%= @cluster.name.to_s.inspect %> do
     availability_zones <%= @cloud.availability_zones.inspect %>
   end
 
-  <% @facets.each { |name, facet| %>
+  <% @facets.each do |name, facet| %>
   facet <%= facet.name.inspect %> do
     instances <%= facet.instances.inspect %>
     <% facet.run_list.each { |item| %>
     <%= item.sub('[', ' "').sub(']', '"') %><% } %>
   end
-  <% } %>
+  <% end %>
 end
 }
       ERB.new(@@CLUSTER_TEMPLATE).result(binding)

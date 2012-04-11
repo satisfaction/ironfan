@@ -142,33 +142,33 @@ module Ironfan
     cluster.cloud.backing "instance"
     cluster.cloud.availability_zones ['us-east-1a']
 
-    cluster_def.each { |key, value|
+    cluster_def.each do |key, value|
       case key
       when 'template_id'
         cluster.cloud.image_name value
       when 'roles'
-        value.each { |role|
+        value.each do |role|
           cluster.role role
-        }
+        end
       when 'groups'
         facets = cluster_def[key]
-        facets.each { |facet_def|
+        facets.each do |facet_def|
           facet = cluster.facet(facet_def['name'])
-          facet_def.each { |key, value|
+          facet_def.each do |key, value|
             case key
             when 'template_id'
               facet.cloud(:vsphere).image_name value
             when 'instance_num'
               facet.instances value
             when 'roles'
-              value.each { |role|
+              value.each do |role|
                 facet.role role
-              }
+              end
             end
-          }
-        }
+          end
+        end
       end
-    }
+    end
 
     # save Cluster object
     cluster.save
