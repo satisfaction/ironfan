@@ -125,7 +125,7 @@ module Ironfan
     raise ArgumentError, "Please supply a cluster definition file" if cluster_def_file.to_s.empty?
 
     # get cluster definition from json file
-    cluster_def = JSON.parse(File.read(cluster_def_file))
+    cluster_def = JSON.parse(File.read(cluster_def_file))['cluster_definition']
     cluster_name = cluster_def['name']
     die("'name' of cluster is not specified in #{cluster_def_file}") if !cluster_name
 
