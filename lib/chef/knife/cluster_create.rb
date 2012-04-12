@@ -54,7 +54,7 @@ class Chef
 
         # Run launch, then bootstrap
         if config[:bootstrap]
-          super.run
+          super # call ClusterLaunch.run()
         end
       end
     end
