@@ -203,9 +203,9 @@ module Ironfan
       step("  setting node runlist and essential attributes")
       @chef_node.run_list = Chef::RunList.new(*@settings[:run_list])
       @chef_node.normal[:organization]   = organization if organization
-      @chef_node.override[:cluster_name] = cluster_name
-      @chef_node.override[:facet_name]   = facet_name
-      @chef_node.override[:facet_index]  = facet_index
+      @chef_node.normal[:cluster_name] = cluster_name
+      @chef_node.normal[:facet_name]   = facet_name
+      @chef_node.normal[:facet_index]  = facet_index
     end
 
     def set_chef_node_environment
