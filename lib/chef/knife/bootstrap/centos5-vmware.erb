@@ -9,14 +9,27 @@ fi
 
 mkdir -p /etc/chef
 
+# create tmp directory for bootstrap
+mkdir -p /tmp/knife-bootstrap
+chmod 700 /tmp/knife-bootstrap 
+cd /tmp/knife-bootstrap
+
+# generate /etc/chef/client.pem
+<%- if @config[:client_key] %>
+(
+cat <<'EOP'
+<%= @config[:client_key] %>
+EOP
+) > /tmp/knife-bootstrap/client.pem
+awk NF /tmp/knife-bootstrap/client.pem > /etc/chef/client.pem
+<%- else %>
 (
 cat <<'EOP'
 <%= validation_key %>
 EOP
-) > /tmp/validation.pem
-awk NF /tmp/validation.pem > /etc/chef/validation.pem
-rm /tmp/validation.pem
-chmod 600 /etc/chef/validation.pem
+) > /tmp/knife-bootstrap/validation.pem
+awk NF /tmp/knife-bootstrap/validation.pem > /etc/chef/validation.pem
+<%- end %>
 
 <% if @chef_config[:encrypted_data_bag_secret] -%>
 (
