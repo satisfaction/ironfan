@@ -21,14 +21,6 @@ module Ironfan
       @tags = { "name" => name, "cluster" => cluster_name, "facet"   => facet_name, "index" => facet_index, }
       ui.warn("Duplicate server #{[self, facet.name, idx]} vs #{@@all[fullname]}") if @@all[fullname]
       @@all[fullname] = self
-
-      # for-vsphere
-      # load chef_node
-      begin
-        @chef_node = Chef::Node.load(@fullname)
-      rescue Net::HTTPServerException => e
-        raise unless e.response.code == '404'
-      end
     end
 
     def fullname fn=nil
