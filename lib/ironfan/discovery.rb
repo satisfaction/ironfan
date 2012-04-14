@@ -168,8 +168,6 @@ module Ironfan
     return @fog_servers if @fog_servers
     Chef::Log.debug("Using fog to catalog all servers")
     @fog_servers = Ironfan.fog_connection.servers.all
-    # for-vsphere
-    #@fog_servers = []
   end
 
   def self.fog_addresses
