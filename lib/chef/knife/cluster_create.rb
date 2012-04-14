@@ -52,6 +52,9 @@ class Chef
         section("Creating cluster file", :green)
         Ironfan.create_cluster(config[:from_file], config[:yes])
 
+        # initialize IaasProvider
+        Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
+
         # Run launch, then bootstrap
         if config[:bootstrap]
           super # call ClusterLaunch.run()

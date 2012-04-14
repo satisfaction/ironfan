@@ -1,4 +1,5 @@
 require 'chef/knife'
+require File.expand_path('../../../ironfan/iaas_layer', File.realpath(__FILE__)) # FIXME
 
 module Ironfan
   module KnifeCommon

@@ -148,6 +148,8 @@ module Ironfan
         #  :region                => region
       })
     when :vsphere
+      @fog_connection ||= Iaas::IaasProvider.new
+=begin for-vsphere
       @fog_connection ||= Fog::Compute.new({
         :provider => "vsphere",
         :vsphere_username => Chef::Config[:knife][:vsphere_username],
@@ -156,6 +158,7 @@ module Ironfan
         :vsphere_expected_pubkey_hash => Chef::Config[:knife][:vsphere_expected_pubkey_hash],
         :vsphere_templates_folder => Chef::Config[:knife][:vsphere_templates_folder],
       })
+=end
     else
       raise 'no cloud name specified.'
     end
@@ -165,6 +168,8 @@ module Ironfan
     return @fog_servers if @fog_servers
     Chef::Log.debug("Using fog to catalog all servers")
     @fog_servers = Ironfan.fog_connection.servers.all
+    # for-vsphere
+    #@fog_servers = []
   end
 
   def self.fog_addresses

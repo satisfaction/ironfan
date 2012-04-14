@@ -137,6 +137,7 @@ module Ironfan
 
     # create new Cluster object
     cluster = Ironfan.cluster(cluster_name)
+    # FIXME these properties of cloud should not be hard coded in future
     cluster.cloud :vsphere
     cluster.cloud.flavor "m1.small"
     cluster.cloud.backing "instance"
@@ -145,7 +146,8 @@ module Ironfan
     cluster_def.each do |key, value|
       case key
       when 'template_id'
-        cluster.cloud.image_name value
+        # cluster.cloud.image_name value
+        cluster.cloud.image_name 'centos5'  # FIXME
       when 'roles'
         value.each do |role|
           cluster.role role

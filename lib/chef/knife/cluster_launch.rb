@@ -69,26 +69,48 @@ class Chef
 
         warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
 
-        die("", "#{ui.color("All servers are running -- not launching any.",:blue)}", "", 1) if target.empty?
+        if target.empty?
+          section("All servers are running -- not launching any.", :green)
+        else
+          # Pre-populate information in chef
+          section("Sync'ing to chef and cloud")
+          target.sync_to_cloud
+          target.sync_to_chef
 
-        # Pre-populate information in chef
-        section("Sync'ing to chef and cloud")
-        target.sync_to_cloud
-        target.sync_to_chef
-
-        # Launch servers
-        section("Creating machines in Cloud", :green)
-        target.create_servers
+          # Launch servers
+          section("Creating machines in Cloud", :green)
+          ## target.create_servers
+          # for-vsphere
+          cluster_def = JSON.parse(File.read(config[:from_file]))
+          task = VHelper::CloudManager::Manager.create_cluster(cluster_def, :wait => false)
+          while !task.finish?
+            puts("creating progress: #{task.get_progress.pretty_inspect}")
+            sleep(5)
+          end
+          puts ("------results: #{task.get_progress.results.servers.pretty_inspect}")
+          # update Ironfan::Server.fog_server
+          fog_servers = task.get_progress.results.servers
+          fog_servers.each do |fog_server|
+            server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
+            server_slice.servers.fog_server = fog_server if server_slice
+          end
+        end
 
         ui.info("")
         display(target)
 
-        # As each server finishes, configure it
-        watcher_threads = target.parallelize do |svr|
-          perform_after_launch_tasks(svr)
-        end
+        target = full_target # handle all servers
 
-        progressbar_for_threads(watcher_threads)
+        target.cluster.facets.each do |name, facet|
+          section("Bootstrapping machines in facet #{name}", :green)
+          servers = target.select { |svr| svr.facet_name == facet.name }
+          puts servers.inspect
+          # As each server finishes, configure it
+          watcher_threads = servers.parallelize do |svr|
+            perform_after_launch_tasks(svr)
+          end
+          progressbar_for_threads(watcher_threads)
+        end
 
         display(target)
       end
