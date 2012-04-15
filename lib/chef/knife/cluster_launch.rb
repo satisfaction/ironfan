@@ -88,11 +88,11 @@ class Chef
             sleep(5)
           end
           puts ("------results: #{task.get_progress.results.servers.pretty_inspect}")
-          # update Ironfan::Server.fog_server
+          Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
           fog_servers = task.get_progress.results.servers
           fog_servers.each do |fog_server|
             server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
-            server_slice.servers.fog_server = fog_server if server_slice
+            server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
           end
         end
 
