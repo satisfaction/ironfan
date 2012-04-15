@@ -1,8 +1,8 @@
 {
   "cluster_definition": {
     "channel_id": "channel_1",
-    "name": "hadoop_cluster_test",
-    "template_id": "centos5",
+    "name": "hadoop_cluster_demo",
+    "template_id": "/Datacenters/Datacenter2012/vm/centos-5.7-template",
     "groups": [
       {
         "name": "master",
@@ -34,7 +34,7 @@
       },
       {
         "name": "client",
-        "roles": ["hadoop", "hive", "pig"],
+        "roles": ["hadoop_client", "hive", "pig"],
         "instance_num": 1,
         "cpu": 1,
         "memory": 1024,
