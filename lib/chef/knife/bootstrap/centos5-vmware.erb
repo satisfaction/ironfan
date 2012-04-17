@@ -1,6 +1,17 @@
 bash -c '
 <%= "export http_proxy=\"#{knife_config[:bootstrap_proxy]}\"" if knife_config[:bootstrap_proxy] -%>
 
+<%- if knife_config[:bootstrap_proxy]
+http, proxy_host, proxy_port = knife_config[:bootstrap_proxy].split(':')
+%>
+(
+cat <<'EOP'
+%_httpproxy <%= proxy_host[2..-1] %>
+%_httpport <%= proxy_port %>
+EOP
+) > ~/.rpmmacros
+<%- end %>
+
 if [ ! -f /usr/bin/chef-client ]; then
   gem update --system --no-rdoc --no-ri
   gem install ohai --no-rdoc --no-ri --verbose
@@ -62,7 +73,10 @@ hostname $dhcpname
 <%
 require 'chef/knife'
 hosts = {}
-servers = Ironfan::Cluster.new(@config[:node].cluster_name).servers
+cluster = Ironfan.load_cluster(@config[:node].cluster_name)
+cluster.resolve!
+cluster.discover!
+servers = cluster.servers
 servers.each do |chef_server|
   svr = chef_server.fog_server
   hosts[svr.name] = "#{svr.public_ip_address}  #{svr.name}.#{domain}  #{svr.name}" if svr
