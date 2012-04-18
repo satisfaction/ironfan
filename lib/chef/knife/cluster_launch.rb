@@ -292,9 +292,6 @@ class Chef
         end
         data['cluster_data'].merge!(cluster_meta)
 
-        pp '------'
-        pp data
-        
         # send to MQ
         send_to_mq(data)
       end
@@ -302,7 +299,7 @@ class Chef
       def send_to_mq(data)
         require 'bunny'
 
-        Chef::Log.debug("Sending data to MessageQueue: #{data}")
+        Chef::Log.debug("Sending data to MessageQueue: #{data.to_json}")
         #b = Bunny.new(:host => '10.141.7.40', :logging => false)
         b = Bunny.new(:host => 'localhost', :logging => false)
         # start a communication session with the amqp server
@@ -312,7 +309,7 @@ class Chef
         exch = b.exchange('bddtask', :durable => true)
 
         # publish message to exchange
-        exch.publish(data, :key => config[:channel])
+        exch.publish(data.to_json, :key => config[:channel])
 
         # message should now be picked up by the consumer so we can stop
         b.stop
