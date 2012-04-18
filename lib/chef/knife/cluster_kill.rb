@@ -53,12 +53,12 @@ class Chef
 
         section("Deleting Cloud Machines")
         task = Ironfan.fog_connection.delete_cluster
-        while !task.finish?
+        while !task.finished?
           Chef::Log.debug("progress of deleting cluster: #{task.get_progress.inspect}")
           sleep(5)
         end
         Chef::Log.debug("result of deleting cluster: #{task.get_progress.result.servers.inspect}")
-      
+
         section("Deleting Chef Nodes")
         target.select(&:in_chef? ).delete_chef
       end

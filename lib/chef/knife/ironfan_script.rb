@@ -42,6 +42,11 @@ module Ironfan
       :description => "Specify the file containing the cluster definition in json format. And specify --yes to overwrite existing cluster file.",
       :required    => true
 
+    option :channel,
+      :long        => "--channel CHANNEL",
+      :description => "channel for reporting status to MessageQueue Server",
+      :required    => false
+
     def run
       load_ironfan
       die(banner) if @name_args.empty?
