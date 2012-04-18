@@ -308,7 +308,7 @@ class Chef
         b.start
 
         # create/get exchange
-        exch = b.exchange('', :durable => true)
+        exch = b.exchange('bddtask', :durable => true)
 
         # publish message to exchange
         exch.publish(data, :key => config[:channel])
