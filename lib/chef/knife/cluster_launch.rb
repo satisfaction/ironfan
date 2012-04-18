@@ -203,7 +203,7 @@ class Chef
         cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
         cluster ||= Ironfan::Database::Cluster.create(:name => cluster_name)
         cluster.finished = false # progress.finished
-        cluster.progress = progress.progress
+        cluster.progress = progress.progress / 2
         cluster.status = progress.status
         cluster.succeed = progress.result.succeed
         cluster.instance_num = progress.result.total
@@ -302,6 +302,7 @@ class Chef
       def send_to_mq(data)
         require 'bunny'
 
+        Chef::Log.debug("Sending data to MessageQueue: #{data}")
         #b = Bunny.new(:host => '10.141.7.40', :logging => false)
         b = Bunny.new(:host => 'localhost', :logging => false)
         # start a communication session with the amqp server
