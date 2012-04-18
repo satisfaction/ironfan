@@ -2,7 +2,7 @@
   "cluster_definition": {
     "channel_id": "channel_1",
     "name": "hadoop_cluster_demo",
-    "template_id": "/Datacenters/Datacenter2012/vm/centos-5.7-template",
+    "template_id": "centos-5.7-template",
     "groups": [
       {
         "name": "master",
@@ -15,7 +15,7 @@
         },
         "storage": {
           "type": "shared",
-          "size": 5120 // 10G
+          "size": 5 // 5G
         }
       },
       {
@@ -29,7 +29,7 @@
         },
         "storage": {
           "type": "shared",
-          "size": 5120
+          "size": 5
         }
       },
       {
@@ -43,7 +43,7 @@
         },
         "storage": {
           "type": "shared",
-          "size": 5120
+          "size": 5
         }
       }
     ]
@@ -60,8 +60,8 @@
         "vc_rps": ["IronfanRP"]
       }
     ],
-    "vc_shared_datastore_patten": "share",
-    "vc_local_datastare_patten": "local",
+    "vc_shared_datastore_pattern": [ "ds-ironfan" ],
+    "vc_local_datastare_pattern": [ "ds-ironfan" ],
     "cloud_adapter": "fog"
   }
 }

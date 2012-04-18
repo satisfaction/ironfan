@@ -15,6 +15,14 @@ module Iaas
 
       @servers = Servers.new(self)
     end
+
+    def create_cluster
+      VHelper::CloudManager::Manager.create_cluster(@connection_desc, :wait => false)
+    end
+
+    def delete_cluster
+      VHelper::CloudManager::Manager.delete_cluster(@connection_desc, :wait => true)
+    end
   end
 
   class IaasCollection

@@ -39,6 +39,31 @@ class Chef
         :boolean     => true,
         :default     => true
 
+      # BEGIN for-vsphere
+      def run
+        load_ironfan
+        die(banner) if @name_args.empty?
+        configure_dry_run
+
+        # initialize IaasProvider
+        Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
+
+        target = get_slice(*@name_args)
+        display(target)
+
+        section("Deleting Cloud Machines")
+        task = Ironfan.fog_connection.delete_cluster
+        while !task.finish?
+          Chef::Log.debug("progress of deleting cluster: #{task.get_progress.inspect}")
+          sleep(5)
+        end
+        Chef::Log.debug("result of deleting cluster: #{task.get_progress.result.servers.inspect}")
+      
+        section("Deleting Chef Nodes")
+        target.select(&:in_chef? ).delete_chef
+      end
+      # END
+
       def relevant?(server)
         server.killable?
       end

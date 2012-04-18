@@ -22,7 +22,7 @@ require File.expand_path('cluster_launch', File.dirname(__FILE__))
 class Chef
   class Knife
     class ClusterCreate < ClusterLaunch
-      include Ironfan::KnifeCommon
+      import_banner_and_options(Ironfan::Script)
 
       deps do
         require 'json'
@@ -38,12 +38,6 @@ class Chef
         option name, Chef::Knife::ClusterLaunch.options[name]
       end
 
-      option :from_file,
-        :long        => "--fromfile FILENAME",
-        :short       => "-f FILENAME",
-        :description => "Specify the file containing the cluster definition in json format. And specify --yes to overwrite existing cluster file.",
-        :required    => true
-
       def run
         load_ironfan
         die(banner) if @name_args.empty?
@@ -55,9 +49,6 @@ class Chef
 
         section("Creating cluster file", :green)
         Ironfan.create_cluster(config[:from_file], config[:yes])
-
-        # initialize IaasProvider
-        Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
 
         # Run launch, then bootstrap
         if config[:bootstrap]

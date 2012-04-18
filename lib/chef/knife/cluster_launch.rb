@@ -21,7 +21,7 @@ require File.expand_path('cluster_bootstrap',    File.dirname(__FILE__))
 
 class Chef
   class Knife
-    class ClusterLaunch < Knife
+    class ClusterLaunch < Ironfan::Script
       include Ironfan::KnifeCommon
 
       deps do
@@ -60,6 +60,10 @@ class Chef
         die(banner) if @name_args.empty?
         configure_dry_run
 
+        # for-vsphere
+        # initialize IaasProvider
+        Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
+
         #
         # Load the facet
         #
@@ -79,21 +83,21 @@ class Chef
 
           # Launch servers
           section("Creating machines in Cloud", :green)
-          ## target.create_servers
-          # for-vsphere
-          cluster_def = JSON.parse(File.read(config[:from_file]))
-          task = VHelper::CloudManager::Manager.create_cluster(cluster_def, :wait => false)
+          ## target.create_servers(true) # FIXME
+          # BEGIN for-vsphere
+          task = Ironfan.fog_connection.create_cluster
           while !task.finish?
-            puts("creating progress: #{task.get_progress.pretty_inspect}")
+            Chef::Log.debug("progress of creating cluster: #{task.get_progress.inspect}")
             sleep(5)
           end
-          puts ("------results: #{task.get_progress.results.servers.pretty_inspect}")
+          Chef::Log.debug("result of creating cluster: #{task.get_progress.result.servers.pretty_inspect}")
           Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
-          fog_servers = task.get_progress.results.servers
+          fog_servers = task.get_progress.result.servers
           fog_servers.each do |fog_server|
             server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
             server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
           end
+          # END
         end
 
         ui.info("")

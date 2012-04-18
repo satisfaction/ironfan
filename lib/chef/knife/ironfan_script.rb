@@ -36,6 +36,12 @@ module Ironfan
       :description => "Skip confirmation prompts on risky actions.",
       :boolean     => true
 
+    option :from_file,
+      :long        => "--fromfile FILENAME",
+      :short       => "-f FILENAME",
+      :description => "Specify the file containing the cluster definition in json format. And specify --yes to overwrite existing cluster file.",
+      :required    => true
+
     def run
       load_ironfan
       die(banner) if @name_args.empty?
