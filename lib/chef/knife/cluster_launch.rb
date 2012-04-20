@@ -75,7 +75,7 @@ class Chef
 
         warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
 
-        ## if target.empty?
+        ## if target.empty? # FIXME
         if false
           section("All servers are running -- not launching any.", :green)
         else
@@ -124,11 +124,11 @@ class Chef
           section("Bootstrapping machines in facet #{name}", :green)
           servers = target.select { |svr| svr.facet_name == facet.name }
           # As each server finishes, configure it
-          watcher_threads = servers.parallelize do |svr|
+          watcher_threads = servers.parallelize_with_servers do |svr| # FIXME originally use servers.parallelize
             perform_after_launch_tasks(svr)
           end
           ## progressbar_for_threads(watcher_threads)
-          # for-vsphere
+          # BEGIN for-vsphere
           section("Report progress of Bootstrapping", :green)
           checked = Hash.new
           while checked.size < watcher_threads.size
@@ -141,6 +141,7 @@ class Chef
             end
           end
           watcher_threads.values.each(&:join)
+          # END
         end
 
         display(target)
@@ -213,8 +214,7 @@ class Chef
 
       # Monitor the progress of cluster creation
       def monitor_launch_progress(cluster_name, progress)
-        require 'ironfan/db/base'
-        Ironfan::Database.connect
+        initialize_database
 
         # update cluster progress
         #cluster_name = progress.cluster_name
@@ -290,9 +290,7 @@ class Chef
       def monitor_bootstrap_progress(svr, exit_code)
         cluster_name = svr.cluster_name.to_s
         Chef::Log.debug("monitor_bootstrap_progress #{cluster_name} #{[exit_code, svr]}")
-        #initialize_database
-        require 'ironfan/db/base'
-        Ironfan::Database.connect
+        initialize_database
 
         cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
 
@@ -318,10 +316,10 @@ class Chef
       # report cluster provision progress to MessageQueue
       def report_progress(cluster_name)
         Chef::Log.debug("Begin reporting status of cluster #{cluster_name}")
-        # generate data in JSON format
-        require 'ironfan/db/base'
-        Ironfan::Database.connect
+        
+        initialize_database
 
+        # generate data in JSON format
         cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
         Chef::Log.debug('Cluster: ' + cluster.inspect)
 

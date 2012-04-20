@@ -243,6 +243,13 @@ module Ironfan
     #
     # @return [Array] array (in same order as servers) of each block's result
     def parallelize
+      servers.each do |svr|
+        sleep(0.1) # avoid hammering with simultaneous requests
+        Thread.new(svr){|svr| yield(svr) }
+      end
+    end
+
+    def parallelize_with_servers
       hash = Hash.new
       servers.each do |svr|
         sleep(0.1) # avoid hammering with simultaneous requests
