@@ -4,11 +4,12 @@ module Ironfan
 
     class Cluster < Sequel::Model
       one_to_many :facets
+      one_to_many :servers
 
       set_schema do
         # basic fields
         primary_key :id
-        String :name, :unique => true
+        String :name, :unique => true, :null => false
         Interger :instance_num
 
         # action progress
@@ -60,11 +61,13 @@ module Ironfan
 
     class Server < Sequel::Model
       many_to_one :facet
+      many_to_one :cluster
 
       set_schema do
         # basic fields
         primary_key :id
         Integer :facet_id
+        Integer :cluster_id
         String :name, :unique => true
         String :hostname
         String :ip_address
