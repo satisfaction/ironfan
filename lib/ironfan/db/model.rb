@@ -45,7 +45,7 @@ module Ironfan
         primary_key :id
         Integer :cluster_id
         String :name
-        Integer :instance_num
+        #Integer :instance_num
       end
 
       create_table if !table_exists?

@@ -91,7 +91,7 @@ class Chef
             Chef::Log.debug("progress of creating cluster: #{task.get_progress.inspect}")
             sleep(5)
           end
-          Chef::Log.debug("result of creating cluster: #{task.get_progress.result.servers.pretty_inspect}")
+          Chef::Log.debug("result of creating cluster: #{task.get_progress.inspect}")
           Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
           fog_servers = task.get_progress.result.servers
           fog_servers.each do |fog_server|
@@ -217,8 +217,6 @@ class Chef
         progress.result.servers.each do |vm|
           facet = Ironfan::Database::Facet.find(:name => vm.group_name, :cluster_id => cluster.id)
           facet ||= Ironfan::Database::Facet.create(:name => vm.group_name, :cluster_id => cluster.id)
-          facet.instance_num = progress.result.servers.length # update facet's instance_num
-          facet.save
 
           server = Ironfan::Database::Server.find(:name => vm.name)
           server ||= Ironfan::Database::Server.new
@@ -276,7 +274,7 @@ class Chef
           fh = facet.as_hash
           fh[:instances] = []
           Chef::Log.debug('Servers ' + facet.servers.inspect)
-          facet.servers.each do |server|
+          facet.servers.sort_by{ |svr| svr.name }.each do |server|
             fh[:instances] << server.as_hash
           end
           data[:cluster_data][:groups] << fh
@@ -285,11 +283,16 @@ class Chef
         data = JSON.parse(data.to_json) # convert keys from symbol to string
         groups = data['cluster_data']['groups']
         cluster_meta = JSON.parse(File.read(config[:from_file]))['cluster_definition']
-        i = 0
-        while i < groups.length
-          cluster_meta['groups'][i].merge!(groups[i])
-          i += 1
+        Chef::Log.debug("cluster_meta before merge: #{cluster_meta.pretty_inspect}")
+        cluster_meta['groups'].each do |meta_group|
+          groups.each do |group|
+            if meta_group['name'] == group['name']
+              meta_group['instances'] = group['instances']
+              break
+            end
+          end
         end
+        Chef::Log.debug("cluster_meta after merge: #{cluster_meta.pretty_inspect}")
         data['cluster_data'].merge!(cluster_meta)
 
         # send to MQ
@@ -299,7 +302,7 @@ class Chef
       def send_to_mq(data)
         require 'bunny'
 
-        Chef::Log.debug("Sending data to MessageQueue: #{data.to_json}")
+        Chef::Log.debug("Sending data to MessageQueue: #{data.pretty_inspect}")
         #b = Bunny.new(:host => '10.141.7.40', :logging => false)
         b = Bunny.new(:host => 'localhost', :logging => false)
         # start a communication session with the amqp server
