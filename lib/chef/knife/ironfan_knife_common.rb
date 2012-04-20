@@ -135,16 +135,18 @@ module Ironfan
       bs = bootstrapper(node, hostname)
       if config[:skip].to_s == 'true'
         ui.info "Skipping: bootstrapp #{hostname} with #{JSON.pretty_generate(bs.config)}"
-        return
+        return 0
       end
       begin
         bs.run
+        return 0
       rescue StandardError => e
         ui.warn e
         ui.warn e.backtrace
         ui.warn ""
         ui.warn node.inspect
         ui.warn ""
+        return 1
       end
     end
 

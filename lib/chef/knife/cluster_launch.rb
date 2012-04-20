@@ -269,9 +269,8 @@ class Chef
 
       def start_monitor_bootstrap(cluster_name)
         Chef::Log.debug("start_monitor_bootstrap #{cluster_name}")
-        #initialize_database
-        require 'ironfan/db/base'
-        Ironfan::Database.connect
+
+        initialize_database
 
         cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
         cluster ||= Ironfan::Database::Cluster.create(:name => cluster_name)
@@ -293,20 +292,30 @@ class Chef
         initialize_database
 
         cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
-
-        if !exit_code
-          server = Ironfan::Database::Server.find(:name => svr.fullname)
+        server = Ironfan::Database::Server.find(:name => svr.fullname)
+        if exit_code == 0 || exit_code.nil?
+          server.finished = true
           server.bootstrapped = true
+          server.succeed = true
+          server.action_name = 'Bootstrap'
+          server.action_status = 'Succeed'
           server.save
 
           cluster.success += 1
         else
+          server.finished = true
+          server.bootstrapped = false
+          server.succeed = false
+          server.action_name = 'Bootstrap'
+          server.action_status = 'Failed'
+          server.save
+
           cluster.failure += 1
         end
 
         cluster.running -= 1
         cluster.progress = (50 + (cluster.success + cluster.failure) * 50.0 / cluster.total).to_i
-        cluster.finished = !cluster.running
+        cluster.finished = (cluster.running == 0)
         cluster.succeed = (cluster.success == cluster.total)
         cluster.save
 
