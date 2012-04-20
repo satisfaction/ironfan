@@ -61,6 +61,8 @@ class Chef
 
         section("Deleting Chef Nodes")
         target.select(&:in_chef? ).delete_chef
+
+        section("Deleting cluster completed.")
       end
       # END
 

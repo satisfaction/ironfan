@@ -184,7 +184,7 @@ module Ironfan
   #
   def self.die *strings
     exit_code = strings.last.is_a?(Integer) ? strings.pop : -1
-    strings.each{|str| ui.warn str }
+    strings.each{|str| ui.error str }
     exit exit_code
   end
 
