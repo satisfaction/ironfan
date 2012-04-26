@@ -75,8 +75,7 @@ class Chef
 
         warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
 
-        ## if target.empty? # FIXME
-        if false
+        if target.empty?
           section("All servers are running -- not launching any.", :green)
         else
           # Pre-populate information in chef
@@ -88,16 +87,16 @@ class Chef
           section("Creating machines in Cloud", :green)
           ## target.create_servers(true) # FIXME
           # BEGIN for-vsphere
+          start_monitor_launch(cluster_name)
           task = Ironfan.fog_connection.create_cluster
           while !task.finished?
             Chef::Log.debug("progress of creating cluster: #{task.get_progress.inspect}")
             section("Reporting progress of creating cluster vms", :green)
             monitor_launch_progress(cluster_name, task.get_progress)
-            sleep(5)
+            sleep(MONITOR_INTERVAL)
           end
           Chef::Log.debug("result of creating cluster vms: #{task.get_progress.inspect}")
           Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
-          Chef::Log.debug('servers in target:' + target.servers.pretty_inspect)
           fog_servers = task.get_progress.result.servers
           fog_servers.each do |fog_server|
             server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
@@ -114,12 +113,10 @@ class Chef
         end
 
         ui.info("")
-        display(target);
+        display(target)
 
         start_monitor_bootstrap(cluster_name)
-
         target = full_target # handle all servers
-
         target.cluster.facets.each do |name, facet|
           section("Bootstrapping machines in facet #{name}", :green)
           servers = target.select { |svr| svr.facet_name == facet.name }
