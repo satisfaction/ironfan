@@ -249,16 +249,6 @@ module Ironfan
       end
     end
 
-    def parallelize_with_servers
-      hash = Hash.new
-      servers.each do |svr|
-        sleep(0.1) # avoid hammering with simultaneous requests
-        thread = Thread.new(svr){|svr| yield(svr) }
-        hash[svr] = thread
-      end
-      hash
-    end
-
   protected
 
     # Helper methods for iterating through the servers to do things

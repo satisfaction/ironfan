@@ -17,10 +17,12 @@
 #
 
 require File.expand_path('ironfan_knife_common', File.dirname(__FILE__))
+require File.expand_path('ironfan_monitor', File.dirname(__FILE__))
 
 module Ironfan
   class Script < Chef::Knife
     include Ironfan::KnifeCommon
+    include Ironfan::Monitor
 
     deps do
       Ironfan::KnifeCommon.load_deps

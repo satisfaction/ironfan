@@ -64,7 +64,7 @@ class Chef
         # initialize IaasProvider
         Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
 
-        cluster_name = @name_args[0]
+        cluster_name = @name_args[0] # FIXME this will fail when @name_args is [clustername-facet-index]
 
         #
         # Load the facet
@@ -116,32 +116,20 @@ class Chef
         ui.info("")
         display(target);
 
-        target = full_target # handle all servers
-
         start_monitor_bootstrap(cluster_name)
+
+        target = full_target # handle all servers
 
         target.cluster.facets.each do |name, facet|
           section("Bootstrapping machines in facet #{name}", :green)
           servers = target.select { |svr| svr.facet_name == facet.name }
           # As each server finishes, configure it
-          watcher_threads = servers.parallelize_with_servers do |svr| # FIXME originally use servers.parallelize
-            perform_after_launch_tasks(svr)
+          watcher_threads = servers.parallelize do |svr| # FIXME originally use servers.parallelize
+            exit_value = perform_after_launch_tasks(svr)
+            monitor_bootstrap_progress(svr, exit_value)
+            exit_value
           end
-          ## progressbar_for_threads(watcher_threads)
-          # BEGIN for-vsphere
-          section("Report progress of Bootstrapping", :green)
-          checked = Hash.new
-          while checked.size < watcher_threads.size
-            watcher_threads.each do |server, thread|
-              if !thread.alive? and !checked[server]
-                section("Report result of Bootstrapping VM #{server}")
-                monitor_bootstrap_progress(server, thread.value)
-                checked[server] = true
-              end
-            end
-          end
-          watcher_threads.values.each(&:join)
-          # END
+          progressbar_for_threads(watcher_threads)
         end
 
         display(target)
@@ -154,6 +142,7 @@ class Chef
       end
 
       def perform_after_launch_tasks(server)
+        Chef::Log.debug('Entered perform_after_launch_tasks')
         # Wait for node creation on amazon side
         server.fog_server.wait_for{ ready? }
 
@@ -212,182 +201,6 @@ class Chef
         ui.info("")
       end
 
-      # Monitor the progress of cluster creation
-      def monitor_launch_progress(cluster_name, progress)
-        initialize_database
-
-        # update cluster progress
-        #cluster_name = progress.cluster_name
-        cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
-        cluster ||= Ironfan::Database::Cluster.create(:name => cluster_name)
-        cluster.finished = false # progress.finished
-        cluster.progress = progress.progress / 2
-        cluster.status = progress.status
-        cluster.succeed = progress.result.succeed
-        cluster.instance_num = progress.result.total
-        cluster.total = progress.result.total
-        cluster.success = progress.result.success
-        cluster.failure = progress.result.failure
-        cluster.running = progress.result.running
-        cluster.save
-
-        return if progress.result.servers.empty?
-        # update servers progress within this cluster
-        progress.result.servers.each do |vm|
-          facet = Ironfan::Database::Facet.find(:name => vm.group_name, :cluster_id => cluster.id)
-          facet ||= Ironfan::Database::Facet.create(:name => vm.group_name, :cluster_id => cluster.id)
-
-          server = Ironfan::Database::Server.find(:name => vm.name)
-          server ||= Ironfan::Database::Server.new
-          server.name = vm.name
-          server.facet_id ||= facet.id
-          server.cluster_id ||= facet.cluster_id
-
-          server.status = vm.status
-          server.ip_address = vm.ip_address
-          server.hostname = vm.hostname
-
-          server.finished = false
-          server.progress = 0
-          server.succeed = false
-
-          server.action_name = 'Create'
-          server.action_status = vm.status
-
-          server.created = vm.created
-          server.bootstrapped = false
-          server.deleted = false
-
-          server.error_code = vm.error_code
-          server.error_msg = vm.error_msg
-
-          server.save
-        end
-
-        report_progress(cluster_name)
-      end
-
-      def start_monitor_bootstrap(cluster_name)
-        Chef::Log.debug("start_monitor_bootstrap #{cluster_name}")
-
-        initialize_database
-
-        cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
-        cluster ||= Ironfan::Database::Cluster.create(:name => cluster_name)
-        cluster.finished = false # progress.finished
-        cluster.progress = 50
-        cluster.status = 'Bootstrapping'
-        cluster.succeed = false
-        cluster.success = 0
-        cluster.failure = 0
-        cluster.running = cluster.total
-        cluster.save
-
-        Ironfan::Database.connect[:servers].filter(:cluster_id => cluster.id).update(:bootstrapped => false)
-      end
-
-      def monitor_bootstrap_progress(svr, exit_code)
-        cluster_name = svr.cluster_name.to_s
-        Chef::Log.debug("monitor_bootstrap_progress #{cluster_name} #{[exit_code, svr]}")
-        initialize_database
-
-        cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
-        server = Ironfan::Database::Server.find(:name => svr.fullname)
-        if exit_code == 0 || exit_code.nil?
-          server.finished = true
-          server.bootstrapped = true
-          server.succeed = true
-          server.action_name = 'Bootstrap'
-          server.action_status = 'Succeed'
-          server.save
-
-          cluster.success += 1
-        else
-          server.finished = true
-          server.bootstrapped = false
-          server.succeed = false
-          server.action_name = 'Bootstrap'
-          server.action_status = 'Failed'
-          server.save
-
-          cluster.failure += 1
-        end
-
-        cluster.running -= 1
-        cluster.progress = (50 + (cluster.success + cluster.failure) * 50.0 / cluster.total).to_i
-        cluster.finished = (cluster.running == 0)
-        cluster.succeed = (cluster.success == cluster.total)
-        cluster.save
-
-        report_progress(cluster_name)
-      end
-
-      # report cluster provision progress to MessageQueue
-      def report_progress(cluster_name)
-        Chef::Log.debug("Begin reporting status of cluster #{cluster_name}")
-        
-        initialize_database
-
-        # generate data in JSON format
-        cluster = Ironfan::Database::Cluster.find(:name => cluster_name)
-        Chef::Log.debug('Cluster: ' + cluster.inspect)
-
-        data = cluster.as_hash
-        data[:cluster_data] = {}
-        data[:cluster_data][:groups] = []
-        Chef::Log.debug('Facets: ' + cluster.facets.inspect)
-        cluster.facets.each do |facet|
-          fh = facet.as_hash
-          fh[:instances] = []
-          Chef::Log.debug('Servers ' + facet.servers.inspect)
-          facet.servers.sort_by{ |svr| svr.name }.each do |server|
-            fh[:instances] << server.as_hash
-          end
-          data[:cluster_data][:groups] << fh
-        end
-
-        data = JSON.parse(data.to_json) # convert keys from symbol to string
-        groups = data['cluster_data']['groups']
-        cluster_meta = JSON.parse(File.read(config[:from_file]))['cluster_definition']
-        cluster_meta['groups'].each do |meta_group|
-          groups.each do |group|
-            if meta_group['name'] == group['name']
-              meta_group['instances'] = group['instances']
-              break
-            end
-          end
-        end
-        data['cluster_data'].merge!(cluster_meta)
-
-        # send to MQ
-        send_to_mq(data)
-        Chef::Log.debug('End reporting cluster status')
-      end
-
-      def send_to_mq(data)
-        require 'bunny'
-
-        Chef::Log.debug("Sending data to MessageQueue: #{data.pretty_inspect}")
-
-        #b = Bunny.new(:host => '10.141.7.40', :logging => false)
-        b = Bunny.new(:host => 'localhost', :logging => false)
-        # start a communication session with the amqp server
-        b.start
-
-        # create/get exchange
-        exch = b.exchange('bddtask', :durable => true)
-
-        # publish message to exchange
-        exch.publish(data.to_json, :key => config[:channel])
-
-        # message should now be picked up by the consumer so we can stop
-        b.stop
-      end
-
-      def initialize_database
-        require 'ironfan/db/base'
-        Ironfan::Database.connect
-      end
     end
   end
 end
