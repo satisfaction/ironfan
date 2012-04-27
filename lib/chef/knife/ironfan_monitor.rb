@@ -1,25 +1,31 @@
 module Ironfan
   module Monitor
-    MONITOR_INTERVAL = 10
+    MONITOR_INTERVAL ||= 10
 
     # Monitor the progress of cluster creation
     def monitor_launch_progress(cluster_name, progress)
       Chef::Log.debug('update launch progress of servers within this cluster')
       return if progress.result.servers.empty?
+
+      has_progress = false
       progress.result.servers.each do |vm|
         # Save progress data to ChefNode
         node = Chef::Node.load(vm.name)
-        node[:provision] ||= Mash.new
-        attrs = node[:provision]
+        if node[:provision] and node[:provision][:progress] == vm.get_create_progress / 2
+          Chef::Log.debug("skip updating server #{vm.name} since no progress")
+          next
+        end
+        has_progress = true
 
+        attrs = get_provision_attrs(node)
         attrs[:name] = vm.name
         attrs[:hostname] = vm.hostname
         attrs[:ip_address] = vm.ip_address
         attrs[:status] = vm.status
 
         attrs[:finished] = vm.ready? # FIXME should use 'vm.finished?'
-        attrs[:progress] = vm.get_create_progress / 2
         attrs[:succeed] = vm.ready? # FIXME should use 'vm.succeed?'
+        attrs[:progress] = vm.get_create_progress / 2
 
         attrs[:action_name] = 'Create'
         attrs[:action_status] = vm.status
@@ -31,39 +37,45 @@ module Ironfan
         attrs[:error_code] = vm.error_code
         attrs[:error_msg] = vm.error_msg
 
+        set_provision_attrs(node, attrs)
         node.save
       end
 
-      report_progress(cluster_name)
+      if has_progress
+        report_progress(cluster_name)
+      else
+        Chef::Log.debug("skip reporting cluster status since no progress")
+      end
     end
 
     def start_monitor_launch(cluster_name)
-      Chef::Log.debug("Initailize monitoring of launch progress of cluster #{cluster_name}")
+      Chef::Log.debug("Initialize monitoring of launch progress of cluster #{cluster_name}")
       nodes = cluster_nodes(cluster_name)
       nodes.each do |node|
-        node[:provision] ||= Mash.new
-        attrs = node[:provision]
+
+        attrs = get_provision_attrs(node)
         attrs[:finished] = false
         attrs[:succeed] = nil
         attrs[:progress] = 0
         attrs[:action_name] = 'Create'
         attrs[:action_status] = 'Running'
+        set_provision_attrs(node, attrs)
         node.save
       end
     end
 
     def start_monitor_bootstrap(cluster_name)
-      Chef::Log.debug("Initailize monitoring of bootstrap progress of cluster #{cluster_name}")
+      Chef::Log.debug("Initialize monitoring of bootstrap progress of cluster #{cluster_name}")
       nodes = cluster_nodes(cluster_name)
       nodes.each do |node|
-        node[:provision] ||= Mash.new
-        attrs = node[:provision]
+        attrs = get_provision_attrs(node)
         attrs[:finished] = false
         attrs[:succeed] = nil
         attrs[:bootstrapped] = false
         attrs[:progress] = 50
         attrs[:action_name] = 'Bootstrap'
         attrs[:action_status] = 'Running'
+        set_provision_attrs(node, attrs)
         node.save
       end
 
@@ -76,8 +88,7 @@ module Ironfan
 
       # Save progress data to ChefNode
       node = Chef::Node.load(svr.fullname)
-      node[:provision] ||= Mash.new
-      attrs = node[:provision]
+      attrs = get_provision_attrs(node)
       if exit_code == 0 || exit_code.nil?
         attrs[:finished] = true
         attrs[:bootstrapped] = true
@@ -92,6 +103,7 @@ module Ironfan
         attrs[:action_status] = 'Failed'
       end
       attrs[:progress] = 100
+      set_provision_attrs(node, attrs)
       node.save
 
       report_progress(cluster_name)
@@ -154,8 +166,11 @@ module Ironfan
 
     def cluster_nodes(cluster_name)
       nodes = []
-      Chef::Search::Query.new.search(:node, "cluster_name:#{cluster_name}") do |n|
-        nodes.push(n) unless n.blank? || (n.cluster_name != cluster_name.to_s)
+      while nodes.empty?
+        Chef::Search::Query.new.search(:node, "cluster_name:#{cluster_name}") do |n|
+          nodes.push(n) unless n.blank? || (n.cluster_name != cluster_name.to_s)
+        end
+        Chef::Log.debug("nodes in cluster #{cluster_name} returned by Chef Search are : #{nodes}")
       end
       nodes.sort_by! { |n| n.name }
     end
@@ -190,6 +205,16 @@ module Ironfan
       cluster[:progress] /= cluster[:total] if cluster[:total] != 0
 
       JSON.parse(cluster.to_json) # convert keys from symbol to string
+    end
+
+    protected
+
+    def get_provision_attrs(chef_node)
+      chef_node[:provision] ? chef_node[:provision].to_hash : Hash.new
+    end
+
+    def set_provision_attrs(chef_node, attrs)
+      chef_node[:provision] = attrs
     end
   end
 end

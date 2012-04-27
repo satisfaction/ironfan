@@ -71,10 +71,13 @@ class Chef
         #
         full_target = get_slice(*@name_args)
         display(full_target)
-        target = full_target.select(&:launchable?)
 
-        warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
-
+        target = full_target
+        # FIXME BEGIN vsphere: bypass this logic
+        ## target = full_target.select(&:launchable?)
+        ## warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
+        # END
+        
         if target.empty?
           section("All servers are running -- not launching any.", :green)
         else
@@ -122,7 +125,7 @@ class Chef
           servers = target.select { |svr| svr.facet_name == facet.name }
           # As each server finishes, configure it
           watcher_threads = servers.parallelize do |svr| # FIXME originally use servers.parallelize
-            exit_value = perform_after_launch_tasks(svr)
+            exit_value = 0 ## perform_after_launch_tasks(svr)
             monitor_bootstrap_progress(svr, exit_value)
             exit_value
           end
