@@ -77,7 +77,7 @@ class Chef
         ## target = full_target.select(&:launchable?)
         ## warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
         # END
-        
+
         if target.empty?
           section("All servers are running -- not launching any.", :green)
         else

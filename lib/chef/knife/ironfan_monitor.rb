@@ -157,6 +157,7 @@ module Ironfan
           nodes.push(n)
         end
         Chef::Log.debug("nodes in cluster #{cluster_name} returned by Chef Search are : #{nodes}")
+        sleep(3)
       end
       nodes.sort_by! { |n| n.name }
     end
