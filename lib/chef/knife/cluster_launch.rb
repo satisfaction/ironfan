@@ -125,7 +125,7 @@ class Chef
           servers = target.select { |svr| svr.facet_name == facet.name }
           # As each server finishes, configure it
           watcher_threads = servers.parallelize do |svr| # FIXME originally use servers.parallelize
-            exit_value = 0 ## perform_after_launch_tasks(svr)
+            exit_value = perform_after_launch_tasks(svr)
             monitor_bootstrap_progress(svr, exit_value)
             exit_value
           end
