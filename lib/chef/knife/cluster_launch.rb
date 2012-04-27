@@ -93,10 +93,10 @@ class Chef
           start_monitor_launch(cluster_name)
           task = Ironfan.fog_connection.create_cluster
           while !task.finished?
+            sleep(MONITOR_INTERVAL)
             Chef::Log.debug("progress of creating cluster: #{task.get_progress.inspect}")
             section("Reporting progress of creating cluster vms", :green)
             monitor_launch_progress(cluster_name, task.get_progress)
-            sleep(MONITOR_INTERVAL)
           end
           Chef::Log.debug("result of creating cluster vms: #{task.get_progress.inspect}")
           Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')

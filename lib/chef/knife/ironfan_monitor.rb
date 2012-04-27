@@ -9,34 +9,18 @@ module Ironfan
 
       has_progress = false
       progress.result.servers.each do |vm|
+        # Get VM attributes
+        attrs = vm.to_hash
+        # when creating VM is done, set the progress to 50%; once bootstrapping VM is done, set the progress to 100%
+        attrs[:progress] = vm.get_create_progress / 2
+
         # Save progress data to ChefNode
         node = Chef::Node.load(vm.name)
-        if node[:provision] and node[:provision][:progress] == vm.get_create_progress / 2
+        if node[:provision] and node[:provision][:progress] == attrs[:progress]
           Chef::Log.debug("skip updating server #{vm.name} since no progress")
           next
         end
         has_progress = true
-
-        attrs = get_provision_attrs(node)
-        attrs[:name] = vm.name
-        attrs[:hostname] = vm.hostname
-        attrs[:ip_address] = vm.ip_address
-        attrs[:status] = vm.status
-
-        attrs[:finished] = vm.ready? # FIXME should use 'vm.finished?'
-        attrs[:succeed] = vm.ready? # FIXME should use 'vm.succeed?'
-        attrs[:progress] = vm.get_create_progress / 2
-
-        attrs[:action_name] = 'Create'
-        attrs[:action_status] = vm.status
-
-        attrs[:created] = vm.created
-        attrs[:bootstrapped] = false
-        attrs[:deleted] = false
-
-        attrs[:error_code] = vm.error_code
-        attrs[:error_msg] = vm.error_msg
-
         set_provision_attrs(node, attrs)
         node.save
       end
@@ -62,6 +46,8 @@ module Ironfan
         set_provision_attrs(node, attrs)
         node.save
       end
+
+      report_progress(cluster_name)
     end
 
     def start_monitor_bootstrap(cluster_name)
@@ -168,7 +154,7 @@ module Ironfan
       nodes = []
       while nodes.empty?
         Chef::Search::Query.new.search(:node, "cluster_name:#{cluster_name}") do |n|
-          nodes.push(n) unless n.blank? || (n.cluster_name != cluster_name.to_s)
+          nodes.push(n)
         end
         Chef::Log.debug("nodes in cluster #{cluster_name} returned by Chef Search are : #{nodes}")
       end
@@ -203,6 +189,8 @@ module Ironfan
       end
       cluster[:total] = nodes.length
       cluster[:progress] /= cluster[:total] if cluster[:total] != 0
+      cluster[:finished] = (cluster[:running] == 0)
+      cluster[:succeed] = (cluster[:success] == cluster[:total])
 
       JSON.parse(cluster.to_json) # convert keys from symbol to string
     end
