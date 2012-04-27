@@ -17,6 +17,13 @@ module Ironfan
       $stdout.sync = true
       Ironfan.ui          = self.ui
       Ironfan.chef_config = self.config
+
+      initialize_iaas_provider
+    end
+
+    def initialize_iaas_provider
+      # for-vsphere
+      Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file]))) # initialize IaasProvider
     end
 
     #

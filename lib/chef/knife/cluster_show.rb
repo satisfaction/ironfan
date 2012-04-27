@@ -20,11 +20,8 @@ require File.expand_path('ironfan_knife_common', File.dirname(__FILE__))
 
 class Chef
   class Knife
-    class ClusterShow < Knife
-      include Ironfan::KnifeCommon
-      deps do
-        Ironfan::KnifeCommon.load_deps
-      end
+    class ClusterShow < Ironfan::Script
+      import_banner_and_options(Ironfan::Script)
 
       banner "knife cluster show        CLUSTER[-FACET[-INDEXES]] (options) - a helpful display of cluster's cloud and chef state"
 

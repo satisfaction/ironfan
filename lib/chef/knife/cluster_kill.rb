@@ -45,9 +45,6 @@ class Chef
         die(banner) if @name_args.empty?
         configure_dry_run
 
-        # initialize IaasProvider
-        Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
-
         target = get_slice(*@name_args)
         display(target)
 

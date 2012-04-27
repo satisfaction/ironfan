@@ -60,10 +60,6 @@ class Chef
         die(banner) if @name_args.empty?
         configure_dry_run
 
-        # for-vsphere
-        # initialize IaasProvider
-        Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file])))
-
         cluster_name = @name_args[0] # FIXME this will fail when @name_args is [clustername-facet-index]
 
         #
