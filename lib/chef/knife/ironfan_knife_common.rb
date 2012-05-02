@@ -139,22 +139,23 @@ module Ironfan
     end
 
     def run_bootstrap(node, hostname)
+      ret = 0
       bs = bootstrapper(node, hostname)
       if config[:skip].to_s == 'true'
         ui.info "Skipping: bootstrapp #{hostname} with #{JSON.pretty_generate(bs.config)}"
-        return 0
+      else
+        begin
+          ret = bs.run
+        rescue StandardError => e
+          ui.error "Error thrown when bootstrapping #{hostname} : #{e}"
+          ui.error e.backtrace.pretty_inspect
+          ui.error "Node data is : #{node.pretty_inspect}"
+          ret = 2
+        end
       end
-      begin
-        bs.run
-        return 0
-      rescue StandardError => e
-        ui.warn e
-        ui.warn e.backtrace
-        ui.warn ""
-        ui.warn node.inspect
-        ui.warn ""
-        return 1
-      end
+
+      ui.warn "Bootstrapping #{hostname} completed with exit value #{ret.to_s}"
+      ret
     end
 
     #
@@ -204,6 +205,70 @@ module Ironfan
     def self.included(base)
       base.class_eval do
         extend ClassMethods
+      end
+    end
+  end
+end
+
+#
+# Override the methods in Chef::Knife::Ssh to return the exit value of SSH command
+#
+class Chef
+  class Knife
+    class Ssh < Knife
+      def run
+        extend Chef::Mixin::Command
+
+        @longest = 0
+
+        configure_attribute
+        configure_user
+        configure_identity_file
+        configure_session
+
+        exit_status = 
+        case @name_args[1]
+        when "interactive"
+          interactive
+        when "screen"
+          screen
+        when "tmux"
+          tmux
+        when "macterm"
+          macterm
+        when "csshx"
+          csshx
+        else
+          ssh_command(@name_args[1..-1].join(" "))
+        end
+
+        session.close
+        exit_status
+      end
+
+      def ssh_command(command, subsession=nil)
+        exit_status = 0
+        subsession ||= session
+        command = fixup_sudo(command)
+        subsession.open_channel do |ch|
+          ch.request_pty
+          ch.exec command do |ch, success|
+            raise ArgumentError, "Cannot execute #{command}" unless success
+            # note: you can't do the stderr calback because requesting a pty
+            # squashes stderr and stdout together
+            ch.on_data do |ichannel, data|
+              print_data(ichannel[:host], data)
+              if data =~ /^knife sudo password: /
+                ichannel.send_data("#{get_password}\n")
+              end
+            end
+            ch.on_request "exit-status" do |ichannel, data|
+              exit_status = data.read_long
+            end
+          end
+        end
+        session.loop
+        exit_status
       end
     end
   end
