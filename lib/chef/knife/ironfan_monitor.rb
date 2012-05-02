@@ -13,6 +13,11 @@ module Ironfan
         attrs = vm.to_hash
         # when creating VM is done, set the progress to 50%; once bootstrapping VM is done, set the progress to 100%
         attrs[:progress] = vm.get_create_progress / 2
+        # reset to correct status
+        if attrs[:finished] and attrs[:succeed]
+          attrs[:finished] = false
+          attrs[:succeed] = nil
+        end
 
         # Save progress data to ChefNode
         node = Chef::Node.load(vm.name)
@@ -183,7 +188,7 @@ module Ironfan
         groups[node.facet_name] = group
         # create cluster summary
         server = node[:provision]
-        cluster[:success] += 1 if server[:succeed]
+        cluster[:success] += 1 if server[:finished] and server[:succeed]
         cluster[:failure] += 1 if server[:finished] and !server[:succeed]
         cluster[:running] += 1 if !server[:finished]
         cluster[:progress] += server[:progress]
