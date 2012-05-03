@@ -80,7 +80,7 @@ module Ironfan
       # Save progress data to ChefNode
       node = Chef::Node.load(svr.fullname)
       attrs = get_provision_attrs(node)
-      if exit_code == 0 || exit_code.nil?
+      if exit_code == 0
         attrs[:finished] = true
         attrs[:bootstrapped] = true
         attrs[:succeed] = true
