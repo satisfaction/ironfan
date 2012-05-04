@@ -1,8 +1,14 @@
 {
   "cluster_definition": {
     "channel_id": "channel_1",
-    "name": "hadoop_cluster_demo",
+    "name": "hadoop_cluster_test",
     "template_id": "centos-5.7-template",
+    "distro": "apache",
+    "distro_map": {
+       "hadoop": "http://localhost/distros/apache/hadoop.tar.gz",
+       "pig": "http://localhost/distros/apache/pig.tar.gz",
+       "hive": "http://localhost/distros/apache/hive.tar.gz"
+    },
     "groups": [
       {
         "name": "master",

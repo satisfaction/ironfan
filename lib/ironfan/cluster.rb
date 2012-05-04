@@ -5,6 +5,7 @@ module Ironfan
   #
   class Cluster < Ironfan::ComputeBuilder
     attr_reader :facets, :undefined_servers
+    has_keys :hadoop_distro
 
     def initialize(name, attrs={})
       super(name.to_sym, attrs)
@@ -108,6 +109,8 @@ module Ironfan
       @@CLUSTER_TEMPLATE ||= %q{
 Ironfan.cluster <%= @cluster.name.to_s.inspect %> do
 
+  hadoop_distro <%= @cluster.hadoop_distro.inspect %>
+
   cloud <%= @cloud.name.inspect %> do
     image_name <%= @cloud.image_name.inspect %>
     flavor <%= @cloud.flavor.inspect %>
@@ -122,6 +125,12 @@ Ironfan.cluster <%= @cluster.name.to_s.inspect %> do
     <%= item.sub('[', ' "').sub(']', '"') %><% } %>
   end
   <% end %>
+
+  cluster_role.override_attributes({
+    :hadoop => {
+      :distro_name => <%= @cluster.hadoop_distro.inspect %>
+    }
+  })
 end
 }
       ERB.new(@@CLUSTER_TEMPLATE).result(binding)

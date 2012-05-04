@@ -18,6 +18,10 @@ describe Ironfan do
       @cluster.name.should == :hadoop_cluster_test
     end
 
+    it 'cluster distro is correct' do
+      @cluster.hadoop_distro.should == "apache"
+    end
+
     it 'cluster cloud is correct' do
       cloud = @cluster.cloud
       cloud.image_name.should == "centos5"
@@ -46,7 +50,7 @@ describe Ironfan do
     it 'facet client is correct' do
       facet = @cluster.facet(:client)
       facet.name.should == :client
-      facet.run_list.should == ["role[hadoop]", "role[hive]", "role[pig]"]
+      facet.run_list.should == ["role[hadoop_client]", "role[hive]", "role[pig]"]
       facet.instances.should == 1
     end
   end

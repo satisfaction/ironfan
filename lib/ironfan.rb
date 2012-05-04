@@ -145,6 +145,8 @@ module Ironfan
 
     cluster_def.each do |key, value|
       case key
+      when 'distro'
+        cluster.hadoop_distro cluster_def[key]
       when 'template_id'
         # cluster.cloud.image_name value
         cluster.cloud.image_name 'centos5'  # FIXME

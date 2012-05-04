@@ -18,12 +18,43 @@ module Ironfan
       Ironfan.ui          = self.ui
       Ironfan.chef_config = self.config
 
-      initialize_iaas_provider
+      # for-vsphere
+      initialize_ironfan_broker
     end
 
-    def initialize_iaas_provider
-      # for-vsphere
-      Iaas::IaasProvider.init(JSON.parse(File.read(config[:from_file]))) # initialize IaasProvider
+    def initialize_ironfan_broker
+      initialize_iaas_provider(config[:from_file])
+      save_distro_info(config[:from_file])
+    end
+
+    def initialize_iaas_provider(filename)
+      Iaas::IaasProvider.init(JSON.parse(File.read(filename))) # initialize IaasProvider
+    end
+
+    def save_distro_info(filename)
+      Chef::Log.debug("Loading hadoop distro info")
+      begin
+        cluster_def = JSON.parse(File.read(filename))['cluster_definition']
+        distro_name = cluster_def['distro']
+        distro_repo = cluster_def['distro_map']
+        distro_repo['id'] = distro_name
+      rescue StandardError => e
+        raise e, "Malformed hadoop distro info in cluster definition file."
+      end
+
+      Chef::Log.debug("Saving hadoop distro info to Chef Data Bag: #{distro_repo}")
+      data_bag_name = "hadoop_distros"
+      databag = Chef::DataBag.load(data_bag_name) rescue databag = nil
+      if databag.nil?
+        databag = Chef::DataBag.new
+        databag.name(data_bag_name)
+        databag.save
+      end
+      databag_item = Chef::DataBagItem.load(distro_name) rescue databag_item = nil
+      databag_item ||= Chef::DataBagItem.new
+      databag_item.data_bag(data_bag_name)
+      databag_item.raw_data = distro_repo
+      databag_item.save
     end
 
     #
