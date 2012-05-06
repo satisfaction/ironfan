@@ -42,7 +42,7 @@ module Ironfan
     def new_chef_role(role_name, cluster, facet=nil)
       chef_role = Chef::Role.new
       chef_role.name        role_name
-      chef_role.description "Ironfan generated role for #{[cluster_name, facet_name].compact.join('-')}" unless chef_role.description
+      chef_role.description "Ironfan generated role for #{[cluster.name, facet ? facet.name : nil].compact.join('-')}"
       chef_role.instance_eval{ @cluster = cluster; @facet = facet; }
       @chef_roles << chef_role
       chef_role
