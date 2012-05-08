@@ -113,10 +113,6 @@ module Ironfan
       delegate_to_servers( :create_server, threaded )
     end
 
-    def sync_roles
-      roles.each(&:save)
-    end
-
     def delete_chef
       delegate_to_servers( :delete_chef, true )
     end
