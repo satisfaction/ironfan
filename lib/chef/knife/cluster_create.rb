@@ -50,10 +50,8 @@ class Chef
         section("Creating cluster file", :green)
         Ironfan.create_cluster(config[:from_file], config[:yes])
 
-        # Run launch, then bootstrap
-        if config[:bootstrap]
-          super # call ClusterLaunch.run()
-        end
+        # Call ClusterLaunch.run
+        super
       end
     end
   end

@@ -60,8 +60,6 @@ class Chef
         die(banner) if @name_args.empty?
         configure_dry_run
 
-        cluster_name = @name_args[0] # FIXME this will fail when @name_args is [clustername-facet-index]
-
         #
         # Load the facet
         #
@@ -102,12 +100,12 @@ class Chef
             server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
           end
 
+          section("Reporting final status of creating cluster VMs", :green)
+          monitor_launch_progress(cluster_name, task.get_progress)
+
           if !task.get_result.succeed?
             die('Creating cluster vms failed. Abort!', 1)
           end
-
-          section("Reporting final status of creating cluster vms", :green)
-          monitor_launch_progress(cluster_name, task.get_progress)
           # END
         end
 
@@ -156,6 +154,8 @@ class Chef
         # Run Bootstrap
         if config[:bootstrap]
           run_bootstrap(server, server.fog_server.ipaddress)
+        else
+          return 0
         end
       end
 

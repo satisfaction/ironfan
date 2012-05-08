@@ -2,41 +2,6 @@ module Ironfan
   module Monitor
     MONITOR_INTERVAL ||= 10
 
-    # Monitor the progress of cluster creation
-    def monitor_launch_progress(cluster_name, progress)
-      Chef::Log.debug('update launch progress of servers within this cluster')
-      return if progress.result.servers.empty?
-
-      has_progress = false
-      progress.result.servers.each do |vm|
-        # Get VM attributes
-        attrs = vm.to_hash
-        # when creating VM is done, set the progress to 50%; once bootstrapping VM is done, set the progress to 100%
-        attrs[:progress] = vm.get_create_progress / 2
-        # reset to correct status
-        if attrs[:finished] and attrs[:succeed]
-          attrs[:finished] = false
-          attrs[:succeed] = nil
-        end
-
-        # Save progress data to ChefNode
-        node = Chef::Node.load(vm.name)
-        if node[:provision] and node[:provision][:progress] == attrs[:progress]
-          Chef::Log.debug("skip updating server #{vm.name} since no progress")
-          next
-        end
-        has_progress = true
-        set_provision_attrs(node, attrs)
-        node.save
-      end
-
-      if has_progress
-        report_progress(cluster_name)
-      else
-        Chef::Log.debug("skip reporting cluster status since no progress")
-      end
-    end
-
     def start_monitor_launch(cluster_name)
       Chef::Log.debug("Initialize monitoring of launch progress of cluster #{cluster_name}")
       nodes = cluster_nodes(cluster_name)
@@ -73,6 +38,41 @@ module Ironfan
       report_progress(cluster_name)
     end
 
+    # Monitor the progress of cluster creation
+    def monitor_launch_progress(cluster_name, progress)
+      Chef::Log.debug('update launch progress of servers within this cluster')
+      return if progress.result.servers.empty?
+
+      has_progress = false
+      progress.result.servers.each do |vm|
+        # Get VM attributes
+        attrs = vm.to_hash
+        # when creating VM is done, set the progress to 50%; once bootstrapping VM is done, set the progress to 100%
+        attrs[:progress] = vm.get_create_progress / 2
+        # reset to correct status
+        if attrs[:finished] and attrs[:succeed]
+          attrs[:finished] = false
+          attrs[:succeed] = nil
+        end
+
+        # Save progress data to ChefNode
+        node = Chef::Node.load(vm.name)
+        if node[:provision] and node[:provision][:progress] == attrs[:progress]
+          Chef::Log.debug("skip updating server #{vm.name} since no progress")
+          next
+        end
+        has_progress = true
+        set_provision_attrs(node, attrs)
+        node.save
+      end
+
+      if has_progress
+        report_progress(cluster_name)
+      else
+        Chef::Log.debug("skip reporting cluster status since no progress")
+      end
+    end
+
     def monitor_bootstrap_progress(svr, exit_code)
       cluster_name = svr.cluster_name.to_s
       Chef::Log.debug("Monitoring bootstrap progress of cluster #{cluster_name} with data: #{[exit_code, svr]}")
@@ -100,11 +100,32 @@ module Ironfan
       report_progress(cluster_name)
     end
 
+    # report progress of deleting cluster to MessageQueue
+    def monitor_delete_progress(cluster_name, progress)
+      Chef::Log.debug("Begin reporting progress of deleting cluster #{cluster_name}")
+
+      cluster = Mash.new
+      cluster[:progress] = progress.progress
+      cluster[:finished] = progress.finished?
+      cluster[:succeed] = progress.result.succeed?
+      cluster[:total] = progress.result.total
+      cluster[:success] = progress.result.success
+      cluster[:failure] = progress.result.failure
+      cluster[:running] = progress.result.running
+      cluster[:cluster_data] = Mash.new
+      cluster[:cluster_data][:name] = cluster_name
+
+      data = JSON.parse(cluster.to_json)
+
+      # send to MQ
+      send_to_mq(data)
+      Chef::Log.debug('End reporting cluster status')
+    end
+
     # report cluster provision progress to MessageQueue
     def report_progress(cluster_name)
       Chef::Log.debug("Begin reporting status of cluster #{cluster_name}")
 
-      # generate cluster nodes data in JSON format
       data = get_cluster_data(cluster_name)
 
       # merge nodes data with cluster definition
@@ -167,6 +188,7 @@ module Ironfan
       nodes.sort_by! { |n| n.name }
     end
 
+    # generate cluster nodes data in JSON format
     def get_cluster_data(cluster_name)
       cluster = Mash.new
       cluster[:total] = 0

@@ -57,6 +57,10 @@ module Ironfan
       databag_item.save
     end
 
+    def cluster_name
+      @name_args[0] # FIXME this will fail when @name_args is [clustername-facet-index]
+    end
+
     #
     # A slice of a cluster:
     #
