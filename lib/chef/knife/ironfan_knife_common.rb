@@ -158,6 +158,10 @@ module Ironfan
       bootstrap = Chef::Knife::Bootstrap.new
       bootstrap.config.merge!(config)
 
+      # load SSH info from knife.rb
+      config[:ssh_user] ||= Chef::Config[:knife][:ssh_user]
+      config[:ssh_password] ||= Chef::Config[:knife][:ssh_password]
+
       bootstrap.name_args               = [ hostname ]
       bootstrap.config[:node]           = server
       bootstrap.config[:run_list]       = server.combined_run_list
