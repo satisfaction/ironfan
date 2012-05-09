@@ -43,10 +43,6 @@ class Chef
         die(banner) if @name_args.empty?
         configure_dry_run
 
-        # load SSH info from knife.rb
-        config[:ssh_user] ||= Chef::Config[:knife][:ssh_user]
-        config[:ssh_password] ||= Chef::Config[:knife][:ssh_password]
-
         section("Creating cluster file", :green)
         Ironfan.create_cluster(config[:from_file], config[:yes])
 
