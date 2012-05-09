@@ -23,6 +23,14 @@ module Iaas
     def delete_cluster
       VHelper::CloudManager::Manager.delete_cluster(@connection_desc, :wait => true)
     end
+
+    def stop_cluster
+      VHelper::CloudManager::Manager.stop_cluster(@connection_desc, :wait => false)
+    end
+
+    def start_cluster
+      VHelper::CloudManager::Manager.start_cluster(@connection_desc, :wait => true)
+    end
   end
 
   class IaasCollection

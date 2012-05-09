@@ -67,7 +67,7 @@
       }
     ],
     "vc_shared_datastore_pattern": [ "ds-ironfan" ],
-    "vc_local_datastare_pattern": [ "ds-ironfan" ],
+    "vc_local_datastore_pattern": [ "ds-ironfan" ],
     "cloud_adapter": "fog"
   }
 }

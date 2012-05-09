@@ -2,6 +2,14 @@ module Ironfan
   module Monitor
     MONITOR_INTERVAL ||= 10
 
+    def update_fog_servers(target, fog_servers)
+      Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
+      fog_servers.each do |fog_server|
+        server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
+        server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
+      end
+    end
+
     def start_monitor_launch(cluster_name)
       Chef::Log.debug("Initialize monitoring of launch progress of cluster #{cluster_name}")
       nodes = cluster_nodes(cluster_name)
@@ -17,7 +25,7 @@ module Ironfan
         node.save
       end
 
-      report_progress(cluster_name)
+      # report_progress(cluster_name) # Don't report because vm_name is nil
     end
 
     def start_monitor_bootstrap(cluster_name)
@@ -41,6 +49,10 @@ module Ironfan
     # Monitor the progress of cluster creation
     def monitor_launch_progress(cluster_name, progress)
       Chef::Log.debug('update launch progress of servers within this cluster')
+      monitor_iaas_action_progress(cluster_name, progress)
+    end
+
+    def monitor_iaas_action_progress(cluster_name, progress, is_last_action = false)
       return if progress.result.servers.empty?
 
       has_progress = false
@@ -48,9 +60,9 @@ module Ironfan
         # Get VM attributes
         attrs = vm.to_hash
         # when creating VM is done, set the progress to 50%; once bootstrapping VM is done, set the progress to 100%
-        attrs[:progress] = vm.get_create_progress / 2
+        attrs[:progress] = vm.get_create_progress / 2 if !is_last_action
         # reset to correct status
-        if attrs[:finished] and attrs[:succeed]
+        if !is_last_action and attrs[:finished] and attrs[:succeed]
           attrs[:finished] = false
           attrs[:succeed] = nil
         end
@@ -103,7 +115,23 @@ module Ironfan
     # report progress of deleting cluster to MessageQueue
     def monitor_delete_progress(cluster_name, progress)
       Chef::Log.debug("Begin reporting progress of deleting cluster #{cluster_name}")
+      report_refined_progress(cluster_name, progress)
+    end
 
+    # report progress of stopping cluster to MessageQueue
+    def monitor_stop_progress(cluster_name, progress)
+      Chef::Log.debug("Begin reporting progress of stopping cluster #{cluster_name}")
+      monitor_iaas_action_progress(cluster_name, progress, true)
+    end
+
+    # report progress of starting cluster to MessageQueue
+    def monitor_start_progress(cluster_name, progress, is_last_action)
+      Chef::Log.debug("Begin reporting progress of starting cluster #{cluster_name}")
+      monitor_iaas_action_progress(cluster_name, progress, is_last_action)
+    end
+
+    # report cluster provision progress without VM detail info to MessageQueue
+    def report_refined_progress(cluster_name, progress)
       cluster = Mash.new
       cluster[:progress] = progress.progress
       cluster[:finished] = progress.finished?
@@ -119,7 +147,6 @@ module Ironfan
 
       # send to MQ
       send_to_mq(data)
-      Chef::Log.debug('End reporting cluster status')
     end
 
     # report cluster provision progress to MessageQueue

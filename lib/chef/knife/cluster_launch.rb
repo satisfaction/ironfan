@@ -93,12 +93,7 @@ class Chef
             monitor_launch_progress(cluster_name, task.get_progress)
           end
           Chef::Log.debug("result of creating cluster vms: #{task.get_progress.inspect}")
-          Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
-          fog_servers = task.get_progress.result.servers
-          fog_servers.each do |fog_server|
-            server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
-            server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
-          end
+          update_fog_servers(target, task.get_progress.result.servers)
 
           section("Reporting final status of creating cluster VMs", :green)
           monitor_launch_progress(cluster_name, task.get_progress)
@@ -118,7 +113,7 @@ class Chef
           section("Bootstrapping machines in facet #{name}", :green)
           servers = target.select { |svr| svr.facet_name == facet.name }
           # As each server finishes, configure it
-          watcher_threads = servers.parallelize do |svr| # FIXME originally use servers.parallelize
+          watcher_threads = servers.parallelize do |svr|
             exit_value = perform_after_launch_tasks(svr)
             monitor_bootstrap_progress(svr, exit_value)
             exit_value
@@ -196,7 +191,6 @@ class Chef
         ui.info "Proceeding to launch anyway. This may produce undesired results."
         ui.info("")
       end
-
     end
   end
 end
