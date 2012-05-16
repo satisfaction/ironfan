@@ -74,8 +74,6 @@ hostname $dhcpname
 require 'chef/knife'
 hosts = {}
 cluster = Ironfan.load_cluster(@config[:node].cluster_name)
-cluster.resolve!
-cluster.discover!
 servers = cluster.servers
 servers.each do |chef_server|
   svr = chef_server.fog_server
