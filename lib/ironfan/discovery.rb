@@ -55,9 +55,10 @@ module Ironfan
 
   protected
 
+    # Fetch latest VMs data from IaaS cloud. VMs data may have already changed since last fetch.
     def fog_servers
       #@fog_servers ||= Ironfan.fog_servers.select{|fs| fs.key_name == cluster_name.to_s && (fs.state != "terminated") }
-      @fog_servers ||= Ironfan.fog_servers.select { |fs| fs.is_a_template == false } # for-vsphere
+      @fog_servers = Ironfan.fog_servers.select { |fs| fs.is_a_template == false } # for-vsphere
     end
 
     # Walk the list of chef nodes and
