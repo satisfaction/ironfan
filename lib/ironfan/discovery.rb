@@ -120,7 +120,7 @@ module Ironfan
             svr.bogosity     :duplicate
           end
         end
-#        svr.fog_server = fs
+        svr.fog_server = fs
       end
     end
 
