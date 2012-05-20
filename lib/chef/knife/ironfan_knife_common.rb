@@ -4,6 +4,12 @@ require File.expand_path('../../../ironfan/iaas_layer', File.realpath(__FILE__))
 module Ironfan
   module KnifeCommon
 
+    # Exit Status of Knife commands
+    SUCCESS ||= 0
+    FAILURE ||= 1
+    CREATE_FAILURE ||= 2
+    BOOTSTRAP_FAILURE ||= 3
+
     def self.load_deps
       require 'formatador'
       require 'chef/node'
@@ -181,7 +187,7 @@ module Ironfan
       ret = 0
       bs = bootstrapper(node, hostname)
       if config[:skip].to_s == 'true'
-        ui.info "Skipping: bootstrapp #{hostname} with #{JSON.pretty_generate(bs.config)}"
+        ui.info "Skipping: bootstrap #{hostname} with #{JSON.pretty_generate(bs.config)}"
       else
         begin
           ret = bs.run
@@ -189,12 +195,65 @@ module Ironfan
           ui.error "Error thrown when bootstrapping #{hostname} : #{e}"
           ui.error e.backtrace.pretty_inspect
           ui.error "Node data is : #{node.pretty_inspect}"
-          ret = 2
+          ret = BOOTSTRAP_FAILURE
         end
       end
 
-      ui.warn "Bootstrapping #{hostname} completed with exit value #{ret.to_s}"
+      ui.warn "Bootstrapping #{hostname} completed with exit status #{ret.to_s}"
       ret
+    end
+
+    def bootstrap_cluster(cluster_name, target)
+      start_monitor_bootstrap(cluster_name)
+      exit_status = []
+      target.cluster.facets.each do |name, facet|
+        section("Bootstrapping machines in facet #{name}", :green)
+        servers = target.select { |svr| svr.facet_name == facet.name }
+        # As each server finishes, configure it
+        watcher_threads = servers.parallelize do |svr|
+          exit_value = bootstrap_server(svr)
+          monitor_bootstrap_progress(svr, exit_value)
+          exit_value
+        end
+        exit_status += watcher_threads.map{ |t| t.join.value }
+        ## progressbar_for_threads(watcher_threads) # this bar messes up with normal logs
+      end
+      Chef::Log.debug("Exit status of bootstrapping cluster: #{exit_status.inspect}")
+
+      exit_status.select{|i| i != SUCCESS}.empty? ? SUCCESS : BOOTSTRAP_FAILURE
+    end
+
+    def bootstrap_server(server)
+      # Run Bootstrap
+      if config[:bootstrap]
+        # Test SSH connection
+        unless config[:dry_run]
+          nil until tcp_test_ssh(server.fog_server.ipaddress) { sleep 3 }
+        end
+        # Bootstrap
+        run_bootstrap(server, server.fog_server.ipaddress)
+      else
+        return SUCCESS
+      end
+    end
+
+    def tcp_test_ssh(hostname)
+      tcp_socket = TCPSocket.new(hostname, 22)
+      readable = IO.select([tcp_socket], nil, nil, 5)
+      if readable
+        Chef::Log.debug("sshd accepting connections on #{hostname}, banner is #{tcp_socket.gets}")
+        yield
+        true
+      else
+        false
+      end
+    rescue Errno::ETIMEDOUT
+      false
+    rescue Errno::ECONNREFUSED
+      sleep 2
+      false
+    ensure
+      tcp_socket && tcp_socket.close
     end
 
     #
