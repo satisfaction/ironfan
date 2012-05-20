@@ -99,7 +99,7 @@ class Chef
           monitor_launch_progress(cluster_name, task.get_progress)
 
           if !task.get_result.succeed?
-            die('Creating cluster vms failed. Abort!', 1)
+            die('Creating cluster vms failed. Abort!', CREATE_FAILURE)
           end
           # END
         end
@@ -107,73 +107,21 @@ class Chef
         ui.info("")
         display(target)
 
-        start_monitor_bootstrap(cluster_name)
-        target = full_target # handle all servers
-        target.cluster.facets.each do |name, facet|
-          section("Bootstrapping machines in facet #{name}", :green)
-          servers = target.select { |svr| svr.facet_name == facet.name }
-          # As each server finishes, configure it
-          watcher_threads = servers.parallelize do |svr|
-            exit_value = perform_after_launch_tasks(svr)
-            monitor_bootstrap_progress(svr, exit_value)
-            exit_value
-          end
-          ## progressbar_for_threads(watcher_threads) # this bar messes up with normal logs
-
-          exit_values = watcher_threads.map{ |t| t.join.value }
-          Chef::Log.debug("exit values of bootstrapping cluster: #{exit_values.inspect}")
+        exit_status = 0
+        if config[:bootstrap]
+          exit_status = bootstrap_cluster(cluster_name, target)
+          display(target)
         end
 
-        display(target)
+        section("Launching cluster completed.")
+
+        exit_status
       end
 
       def display(target)
         super(target, ["Name", "InstanceID", "State", "Flavor", "Image", "Public IP", "Private IP", "Created At"]) do |svr|
           { 'Launchable?' => (svr.launchable? ? "[blue]#{svr.launchable?}[reset]" : '-' ), }
         end
-      end
-
-      def perform_after_launch_tasks(server)
-        Chef::Log.debug('Entered perform_after_launch_tasks')
-        # Wait for node creation on amazon side
-        server.fog_server.wait_for{ ready? }
-
-        # Try SSH
-        unless config[:dry_run]
-          nil until tcp_test_ssh(server.fog_server.ipaddress){ sleep @initial_sleep_delay ||= 3  }
-        end
-
-        # Make sure our list of volumes is accurate
-        #Ironfan.fetch_fog_volumes
-        #server.discover_volumes!
-        # Attach volumes, etc
-        #server.sync_to_cloud
-
-        # Run Bootstrap
-        if config[:bootstrap]
-          run_bootstrap(server, server.fog_server.ipaddress)
-        else
-          return 0
-        end
-      end
-
-      def tcp_test_ssh(hostname)
-        tcp_socket = TCPSocket.new(hostname, 22)
-        readable = IO.select([tcp_socket], nil, nil, 5)
-        if readable
-          Chef::Log.debug("sshd accepting connections on #{hostname}, banner is #{tcp_socket.gets}")
-          yield
-          true
-        else
-          false
-        end
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      ensure
-        tcp_socket && tcp_socket.close
       end
 
       def warn_or_die_on_bogus_servers(target)
