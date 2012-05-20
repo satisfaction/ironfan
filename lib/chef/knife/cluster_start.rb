@@ -66,6 +66,7 @@ class Chef
         if config[:bootstrap]
           exit_values = bootstrap_cluster(cluster_name, target)
         end
+        Chef::Log.debug("exit values of starting cluster: #{exit_values}")
 
         section("Starting cluster completed.")
         return exit_values.select{|i| i != 0}.empty? ? 0 : 3
@@ -84,19 +85,17 @@ class Chef
             monitor_bootstrap_progress(svr, exit_value)
             exit_value
           end
-          progressbar_for_threads(watcher_threads)
+          ## progressbar_for_threads(watcher_threads)
         end
         watcher_threads.map{ |t| t.join.value }
       end
 
       def bootstrap_server(server)
-        Chef::Log.debug('Entered bootstrap_server')
-
         # Run Bootstrap
         if config[:bootstrap]
           # Test SSH connection
           unless config[:dry_run]
-            nil until tcp_test_ssh(server.fog_server.ipaddress) { sleep 10 }
+            nil until tcp_test_ssh(server.fog_server.ipaddress) { sleep 3 }
           end
           # Bootstrap
           run_bootstrap(server, server.fog_server.ipaddress)

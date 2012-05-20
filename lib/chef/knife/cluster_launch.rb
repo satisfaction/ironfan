@@ -118,7 +118,10 @@ class Chef
             monitor_bootstrap_progress(svr, exit_value)
             exit_value
           end
-          progressbar_for_threads(watcher_threads)
+          ## progressbar_for_threads(watcher_threads) # this bar messes up with normal logs
+
+          exit_values = watcher_threads.map{ |t| t.join.value }
+          Chef::Log.debug("exit values of bootstrapping cluster: #{exit_values.inspect}")
         end
 
         display(target)
@@ -137,7 +140,7 @@ class Chef
 
         # Try SSH
         unless config[:dry_run]
-          nil until tcp_test_ssh(server.fog_server.ipaddress){ sleep @initial_sleep_delay ||= 10  }
+          nil until tcp_test_ssh(server.fog_server.ipaddress){ sleep @initial_sleep_delay ||= 3  }
         end
 
         # Make sure our list of volumes is accurate
