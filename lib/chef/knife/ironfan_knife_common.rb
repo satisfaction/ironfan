@@ -217,7 +217,7 @@ module Ironfan
     # Announce a new section of tasks
     #
     def section(desc, *style)
-      style = [:blue] if style.empty?
+      style = [:green] if style.empty?
       ui.info(ui.color(desc, *style))
     end
 

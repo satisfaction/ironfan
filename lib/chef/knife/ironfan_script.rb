@@ -66,12 +66,16 @@ module Ironfan
         confirm_execution(target)
       end
 
-      perform_execution(target)
+      exit_value = perform_execution(target)
+
       target.sync_to_cloud
 
       ui.info("")
       ui.info "Finished! Current state:"
       display(target)
+
+      section("Exit value of Knife command is: #{exit_value.inspect}")
+      exit_value
     end
 
     def perform_execution(target)

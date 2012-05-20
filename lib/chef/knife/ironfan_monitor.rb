@@ -3,7 +3,7 @@ module Ironfan
     MONITOR_INTERVAL ||= 10
 
     def update_fog_servers(target, fog_servers)
-      Chef::Log.debug('updating Ironfan::Server.fog_server with value returned by CloudManager')
+      Chef::Log.debug("updating Ironfan::Server.fog_server with fog_servers returned by CloudManager: #{fog_servers.inspect}")
       fog_servers.each do |fog_server|
         server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
         server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
