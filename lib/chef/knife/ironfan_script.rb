@@ -74,7 +74,7 @@ module Ironfan
       ui.info "Finished! Current state:"
       display(target)
 
-      section("Exit value of Knife command is: #{exit_value.inspect}")
+      Chef::Log.debug("Exit value of Knife command is: #{exit_value.inspect}")
       exit_value
     end
 

@@ -24,6 +24,8 @@ module Ironfan
       Ironfan.ui          = self.ui
       Ironfan.chef_config = self.config
 
+      Chef::Log::Formatter.show_time = true # initialize logger
+
       # for-vsphere
       initialize_ironfan_broker
     end
