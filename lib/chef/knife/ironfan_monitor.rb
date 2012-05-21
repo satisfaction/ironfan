@@ -2,6 +2,15 @@ module Ironfan
   module Monitor
     MONITOR_INTERVAL ||= 10
 
+    # VM Status
+    STATUS_VM_NOT_EXIST ||= 'Not Exist'
+    STATUS_BOOTSTAP_SUCCEED ||= 'Service Ready'
+    STATUS_BOOTSTAP_FAIL ||= 'Bootstrap Failed'
+
+    # Actions being performed on VM
+    ACTION_CREATE_VM ||= 'Creating VM'
+    ACTION_BOOTSTRAP_VM ||= 'Bootstrapping VM'
+
     def update_fog_servers(target, fog_servers)
       Chef::Log.debug("updating Ironfan::Server.fog_server with fog_servers returned by CloudManager: #{fog_servers.inspect}")
       fog_servers.each do |fog_server|
@@ -19,8 +28,8 @@ module Ironfan
         attrs[:finished] = false
         attrs[:succeed] = nil
         attrs[:progress] = 0
-        attrs[:action_name] = 'Create'
-        attrs[:action_status] = 'Running'
+        attrs[:action] = ACTION_CREATE_VM
+        attrs[:status] ||= STATUS_VM_NOT_EXIST
         set_provision_attrs(node, attrs)
         node.save
       end
@@ -37,8 +46,7 @@ module Ironfan
         attrs[:succeed] = nil
         attrs[:bootstrapped] = false
         attrs[:progress] = 50
-        attrs[:action_name] = 'Bootstrap'
-        attrs[:action_status] = 'Running'
+        attrs[:action] = ACTION_BOOTSTRAP_VM
         set_provision_attrs(node, attrs)
         node.save
       end
@@ -96,15 +104,14 @@ module Ironfan
         attrs[:finished] = true
         attrs[:bootstrapped] = true
         attrs[:succeed] = true
-        attrs[:action_name] = 'Bootstrap'
-        attrs[:action_status] = 'Succeed'
+        attrs[:status] = STATUS_BOOTSTAP_SUCCEED
       else
         attrs[:finished] = true
         attrs[:bootstrapped] = false
         attrs[:succeed] = false
-        attrs[:action_name] = 'Bootstrap'
-        attrs[:action_status] = 'Failed'
+        attrs[:status] = STATUS_BOOTSTAP_FAIL
       end
+      attrs[:action] = ''
       attrs[:progress] = 100
       set_provision_attrs(node, attrs)
       node.save
@@ -169,6 +176,12 @@ module Ironfan
     end
 
     def send_to_mq(data)
+      if (@last_data == data.to_json)
+        Chef::Log.debug("Skip reporting progress since no change")
+        return
+      end
+      @last_data = data.to_json
+
       Chef::Log.debug("About to send data to MessageQueue: #{data.pretty_inspect}")
 
       return if monitor_disabled?

@@ -208,6 +208,13 @@ module Ironfan
       exit_status = []
       target.cluster.facets.each do |name, facet|
         section("Bootstrapping machines in facet #{name}", :green)
+        monitor_thread = Thread.new(cluster_name) do |name|
+          while true
+            sleep(Ironfan::Monitor::MONITOR_INTERVAL)
+            report_progress(name)
+          end
+        end
+
         servers = target.select { |svr| svr.facet_name == facet.name }
         # As each server finishes, configure it
         watcher_threads = servers.parallelize do |svr|
@@ -217,6 +224,8 @@ module Ironfan
         end
         exit_status += watcher_threads.map{ |t| t.join.value }
         ## progressbar_for_threads(watcher_threads) # this bar messes up with normal logs
+
+        monitor_thread.exit
       end
       Chef::Log.debug("Exit status of bootstrapping cluster: #{exit_status.inspect}")
 
