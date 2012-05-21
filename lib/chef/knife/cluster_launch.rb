@@ -88,14 +88,13 @@ class Chef
           task = Ironfan.fog_connection.create_cluster
           while !task.finished?
             sleep(MONITOR_INTERVAL)
-            Chef::Log.debug("progress of creating cluster: #{task.get_progress.inspect}")
-            section("Reporting progress of creating cluster vms", :green)
+            Chef::Log.debug("Reporting progress of creating cluster vms: #{task.get_progress.inspect}")
             monitor_launch_progress(cluster_name, task.get_progress)
           end
           Chef::Log.debug("result of creating cluster vms: #{task.get_progress.inspect}")
           update_fog_servers(target, task.get_progress.result.servers)
 
-          section("Reporting final status of creating cluster VMs", :green)
+          Chef::Log.debug("Reporting final status of creating cluster VMs")
           monitor_launch_progress(cluster_name, task.get_progress)
 
           if !task.get_result.succeed?
