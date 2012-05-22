@@ -139,9 +139,7 @@ module Ironfan
     cluster = Ironfan.cluster(cluster_name)
     # FIXME these properties of cloud should not be hard coded in future
     cluster.cloud :vsphere
-    cluster.cloud.flavor "m1.small"
-    cluster.cloud.backing "instance"
-    cluster.cloud.availability_zones ['us-east-1a']
+    cluster.cloud.flavor "default"
 
     cluster_def.each do |key, value|
       case key

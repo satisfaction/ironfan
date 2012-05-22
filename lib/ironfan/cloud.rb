@@ -48,9 +48,12 @@ module Ironfan
     class Base < Ironfan::DslObject
       has_keys(
         :name, :flavor, :image_name, :image_id, :keypair,
-        :chef_client_script, :public_ip, :permanent )
+        :chef_client_script, :public_ip, :permanent,
+        :user_data)
+
       attr_accessor :owner
 
+      # The owner is the Ironfan::Cluster or Ironfan::Facet who holds this cloud
       def initialize(owner, *args)
         self.owner = owner
         super(*args)
@@ -410,12 +413,7 @@ module Ironfan
       # password, username, service
     end
 
-    class Vsphere < Ec2
-      has_keys(
-        :host, :user, :pass, :dc, :templates_folder,
-        :security_groups, :availability_zones, :backing
-      )
-
+    class Vsphere < Base
       def initialize *args
         super *args
         name :vsphere
@@ -430,27 +428,20 @@ module Ironfan
       def flavor_info
         FLAVOR_INFO[ flavor ] || {} # or raise "Please define the machine's flavor."
       end
-      
+
+      # TODO: we will define flavors for vShpere Cloud, similar to flavors in EC2 Cloud.
       FLAVOR_INFO = {
-        't1.micro'    => { :price => 0.02,  :bits => '64-bit', :ram =>    686, :cores => 1, :core_size => 0.25, :inst_disks => 0, :inst_disk_size => 0,   },
-        'm1.small'    => { :price => 0.085, :bits => '32-bit', :ram =>   1024, :cores => 1, :core_size => 1,    :inst_disks => 1, :inst_disk_size => 0, },
+        'default'    => { :bits => '64-bit' },
       }
 
+      # :image_id is the name of VM Template in vCenter to be cloned from
+      # :ssh_user is the user name used to SSH to the VM Template when bootstrapping VM
+      # :bootstrap_distro is the name of bootstrap template file defined in Ironfan
       IMAGE_INFO =  {
-        #
-        # Maverick (Ubuntu 10.10)
-        #
-        %w[ 32-bit  maverick ] => { :image_id => 'ubuntu-10-04-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-vmware", },
-        #
-        # Oneiric (Ubuntu 11.10)
-        #
-        %w[ 32-bit  oneiric  ] => { :image_id => 'ubuntu-11-10-server-i386', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu11.10-gems", },
-
         # CentOS 5 i386
-        %w[ 32-bit  centos5 ] => { :image_id => 'centos-5.7-x86_64', :ssh_user => 'vmware', :bootstrap_distro => "centos5-vmware", },
+        %w[ 32-bit  centos5 ] => { :image_id => 'centos-5.7-i386', :ssh_user => 'vmware', :bootstrap_distro => "centos5-vmware", },
         # CentOS 5 x86_64
         %w[ 64-bit  centos5 ] => { :image_id => 'centos-5.7-x86_64', :ssh_user => 'vmware', :bootstrap_distro => "centos5-vmware", },
-
       }
     end
   end

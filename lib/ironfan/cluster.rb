@@ -14,7 +14,6 @@ module Ironfan
       @chef_roles        = []
       environment          :_default if environment.blank?
       create_cluster_role
-      create_cluster_security_group unless attrs[:no_security_group]
     end
 
     def cluster
@@ -22,7 +21,7 @@ module Ironfan
     end
 
     def cluster_name
-      name
+      name.to_s
     end
 
     # The auto-generated role for this cluster.
@@ -52,7 +51,7 @@ module Ironfan
     #
     def facet(facet_name, attrs={}, &block)
       facet_name = facet_name.to_sym
-      @facets[facet_name] ||= Ironfan::Facet.new(self, facet_name)
+      @facets[facet_name] ||= Ironfan::Facet.new(self, facet_name, attrs)
       @facets[facet_name].configure(attrs, &block)
       @facets[facet_name]
     end
@@ -114,8 +113,6 @@ Ironfan.cluster <%= @cluster.name.to_s.inspect %> do
   cloud <%= @cloud.name.inspect %> do
     image_name <%= @cloud.image_name.inspect %>
     flavor <%= @cloud.flavor.inspect %>
-    backing <%= @cloud.backing.inspect %>
-    availability_zones <%= @cloud.availability_zones.inspect %>
   end
 
   <% @facets.each do |name, facet| %>
@@ -152,6 +149,10 @@ end
     end
 
   protected
+
+    def after_cloud_created(attrs)
+      create_cluster_security_group if self.cloud.name == :ec2 and !attrs[:no_security_group]
+    end
 
     # Create a security group named for the cluster
     # that is friends with everything in the cluster
