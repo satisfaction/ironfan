@@ -25,8 +25,7 @@ describe Ironfan do
     it 'cluster cloud is correct' do
       cloud = @cluster.cloud
       cloud.image_name.should == "centos5"
-      cloud.backing.should == "instance"
-      cloud.flavor.should == "m1.small"
+      cloud.flavor.should == "default"
     end
 
     it 'facets are in correct order' do

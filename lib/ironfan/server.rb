@@ -112,10 +112,15 @@ module Ironfan
       reverse_merge!(facet)
       reverse_merge!(cluster)
       @settings[:run_list] = combined_run_list
-      #
-      cloud.reverse_merge!(facet.cloud)
-      cloud.reverse_merge!(cluster.cloud)
-      #
+
+      # create cloud provider
+      cloud_name = cluster.cloud.name if cluster.cloud
+      cloud_name = facet.cloud.name if facet.cloud
+      cloud(cloud_name)
+      # merge cloud settings
+      cloud.reverse_merge!(facet.cloud) if facet.cloud
+      cloud.reverse_merge!(cluster.cloud) if cluster.cloud
+
       cloud.user_data({
           :chef_server            => chef_server_url,
           :validation_client_name => validation_client_name,

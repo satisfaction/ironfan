@@ -37,17 +37,22 @@ module Ironfan
     #   end
     #
     def cloud cloud_provider=nil, hsh={}, &block
+      return @cloud if @cloud or cloud_provider.nil?
       case cloud_provider
         when :ec2
           @cloud ||= Ironfan::Cloud::Ec2.new(self)
         when :vsphere
           @cloud ||= Ironfan::Cloud::Vsphere.new(self)
         else
-          @cloud ||= Ironfan::Cloud::Vsphere.new(self)
-          # raise "Only supports ec2 and vsphere so far" if @cloud.nil?
+          raise "Unknown cloud provider #{cloud_provider.inspect}. Only supports :ec2 and :vsphere so far."
       end
       @cloud.configure(hsh, &block) if block
+      after_cloud_created(hsh)
       @cloud
+    end
+
+    def after_cloud_created(attrs)
+      nil
     end
 
     # sugar for cloud(:vsphere)

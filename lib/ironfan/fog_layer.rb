@@ -27,7 +27,7 @@ module Ironfan
       {
         :image_id             => cloud.image_id,
         :flavor_id            => cloud.flavor,
-        :groups               => cloud.security_groups.keys,
+        :groups               => cloud.name == :ec2 ? cloud.security_groups.keys : [],
         :key_name             => cloud.keypair.to_s,
         # Fog does not actually create tags when it creates a server.
         :tags                 => {
@@ -36,8 +36,8 @@ module Ironfan
           :index              => facet_index, },
         :user_data            => JSON.pretty_generate(user_data_hsh),
         :block_device_mapping => block_device_mapping,
-        :availability_zone    => self.default_availability_zone,
-        :monitoring           => cloud.monitoring,
+        :availability_zone    => cloud.name == :ec2 ? self.default_availability_zone : nil,
+        :monitoring           => cloud.name == :ec2 ? cloud.monitoring : nil,
         # :disable_api_termination => cloud.permanent,
         # :instance_initiated_shutdown_behavior => instance_initiated_shutdown_behavior,
 
