@@ -1,6 +1,3 @@
-module VHelper
-end
-
 module Iaas
   class IaasProvider
     attr_reader :servers
@@ -17,19 +14,19 @@ module Iaas
     end
 
     def create_cluster
-      VHelper::CloudManager::Manager.create_cluster(@connection_desc, :wait => false)
+      Serengeti::CloudManager::Manager.create_cluster(@connection_desc, :wait => false)
     end
 
     def delete_cluster
-      VHelper::CloudManager::Manager.delete_cluster(@connection_desc, :wait => true)
+      Serengeti::CloudManager::Manager.delete_cluster(@connection_desc, :wait => false)
     end
 
     def stop_cluster
-      VHelper::CloudManager::Manager.stop_cluster(@connection_desc, :wait => false)
+      Serengeti::CloudManager::Manager.stop_cluster(@connection_desc, :wait => false)
     end
 
     def start_cluster
-      VHelper::CloudManager::Manager.start_cluster(@connection_desc, :wait => true)
+      Serengeti::CloudManager::Manager.start_cluster(@connection_desc, :wait => false)
     end
   end
 
@@ -43,11 +40,10 @@ module Iaas
     end
 
     def all
-      VHelper::CloudManager::Manager.list_vms_cluster(@provider.connection_desc)
+      Serengeti::CloudManager::Manager.list_vms_cluster(@provider.connection_desc)
     end
   end
 end
-
 
 require File.expand_path('../../../cloud-manager/spec/config', File.dirname(__FILE__))
 require 'cloud_manager'
