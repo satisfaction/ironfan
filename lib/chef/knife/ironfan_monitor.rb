@@ -11,8 +11,8 @@ module Ironfan
     ACTION_CREATE_VM ||= 'Creating VM'
     ACTION_BOOTSTRAP_VM ||= 'Bootstrapping VM'
 
+    # update Ironfan::Server.fog_server with fog_servers returned by CloudManager
     def update_fog_servers(target, fog_servers)
-      Chef::Log.debug("updating Ironfan::Server.fog_server with fog_servers returned by CloudManager: #{fog_servers.inspect}")
       fog_servers.each do |fog_server|
         server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
         server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
@@ -68,7 +68,7 @@ module Ironfan
         # Get VM attributes
         attrs = vm.to_hash
         # when creating VM is done, set the progress to 50%; once bootstrapping VM is done, set the progress to 100%
-        attrs[:progress] = vm.get_create_progress / 2 if !is_last_action
+        attrs[:progress] = vm.get_progress / 2 if !is_last_action
         # reset to correct status
         if !is_last_action and attrs[:finished] and attrs[:succeed]
           attrs[:finished] = false
