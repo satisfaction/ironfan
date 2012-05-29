@@ -11,6 +11,8 @@ module Iaas
       @connection_desc = @@connection_desc
 
       @servers = Servers.new(self)
+
+      Serengeti::CloudManager::Manager.set_log_level(Chef::Log.level)
     end
 
     def create_cluster
