@@ -42,11 +42,6 @@ module Ironfan
       :long        => "--fromfile FILENAME",
       :short       => "-f FILENAME",
       :description => "Specify the file containing the cluster definition in json format. And specify --yes to overwrite existing cluster file.",
-      :required    => true
-
-    option :channel,
-      :long        => "--channel CHANNEL",
-      :description => "channel for reporting status to MessageQueue Server",
       :required    => false
 
     def run
