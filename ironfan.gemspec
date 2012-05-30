@@ -91,7 +91,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://infochimps.com/labs"
   s.licenses = ["apachev2"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.11"
+  s.rubygems_version = "1.8.15"
   s.summary = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
   s.test_files = ["spec/data/cluster_definition.json", "spec/data/clusters/webserver_demo.rb", "spec/test_config.rb", "spec/ironfan/facet_spec.rb", "spec/ironfan/cluster_spec.rb", "spec/ironfan/server_slice_spec.rb", "spec/ironfan/server_spec.rb", "spec/ironfan/cluster_create_spec.rb", "spec/ironfan_spec.rb", "spec/spec_helper/dummy_chef.rb", "spec/spec_helper.rb"]
 
@@ -103,6 +103,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<fog>, ["~> 1.1.1"])
       s.add_runtime_dependency(%q<formatador>, ["~> 0.2.1"])
       s.add_runtime_dependency(%q<gorillib>, ["~> 0.1.7"])
+      s.add_runtime_dependency(%q<cloud-manager>, ["~> 1.0.0"])
       s.add_development_dependency(%q<bundler>, ["~> 1"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.6"])
       s.add_development_dependency(%q<rspec>, ["~> 2.5"])
@@ -118,6 +119,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<rspec>, ["~> 2.5"])
       s.add_dependency(%q<yard>, ["~> 0.6"])
       s.add_dependency(%q<redcarpet>, ["~> 2"])
+      s.add_dependency(%q<cloud-manager>, ["~> 1.0.0"])
     end
   else
     s.add_dependency(%q<chef>, ["~> 0.10.4"])
@@ -129,6 +131,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<rspec>, ["~> 2.5"])
     s.add_dependency(%q<yard>, ["~> 0.6"])
     s.add_dependency(%q<redcarpet>, ["~> 2"])
+    s.add_dependency(%q<cloud-manager>, ["~> 1.0.0"])
   end
 end
 
