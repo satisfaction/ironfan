@@ -189,9 +189,9 @@ module Ironfan
       require 'bunny'
 
       # load MessageQueque configuration
-      mq_server = Chef::Config[:knife][:mq_server] || 'localhost'
-      mq_exchange_id = Chef::Config[:knife][:mq_exchange_id] || 'bddtask'
-      mq_channel_id = config[:channel]
+      mq_server = Chef::Config[:knife][:rabbitmq_host] 
+      mq_exchange_id = Chef::Config[:knife][:rabbitmq_exchange]
+      mq_channel_id = Chef::Config[:knife][:rabbitmq_channel]
 
       b = Bunny.new(:host => mq_server, :logging => false)
       # start a communication session with the RabbitMQ server
