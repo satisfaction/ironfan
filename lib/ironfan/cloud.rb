@@ -2,9 +2,6 @@ module Ironfan
   module Cloud
 
     #
-    # Right now only one cloud provider is implemented, so the separation
-    # between `cloud` and `cloud(:ec2)` is muddy.
-    #
     # The goal though is to allow
     #
     # * cloud with no predicate -- definitions that apply to all cloud
@@ -57,6 +54,35 @@ module Ironfan
       def initialize(owner, *args)
         self.owner = owner
         super(*args)
+      end
+
+      # Returns a connection Object which talks to various cloud providers including EC2, vSphere, OpenStack, etc.
+      def fog_connection
+        raise "Must implement this function in sub-class."
+      end
+
+      def fog_servers
+        return @fog_servers if @fog_servers
+        Chef::Log.debug("Using fog to catalog all servers")
+        @fog_servers = fog_connection.servers.all
+      end
+
+      def fog_addresses
+        return @fog_addresses if @fog_addresses
+        Chef::Log.debug("Using fog to catalog all addresses")
+        @fog_addresses = {}.tap{|hsh| fog_connection.addresses.each{|fa| hsh[fa.public_ip] = fa } }
+      end
+
+      def fog_volumes
+        return @fog_volumes if @fog_addresses
+        Chef::Log.debug("Using fog to catalog all volumes")
+        @fog_volumes = fog_connection.volumes
+      end
+
+      def fog_keypairs
+        return @fog_keypairs if @fog_keypairs
+        Chef::Log.debug("Using fog to catalog all keypairs")
+        @fog_keypairs = {}.tap{|hsh| fog_connection.key_pairs.each{|kp| hsh[kp.name] = kp } }
       end
 
       # default values to apply where no value was set
@@ -134,6 +160,15 @@ module Ironfan
         name :ec2 # cloud provider name
         @settings[:security_groups]      ||= Mash.new
         @settings[:user_data]            ||= Mash.new
+      end
+
+      def fog_connection
+        @fog_connection ||= Fog::Compute.new({
+            :provider              => 'AWS',
+            :aws_access_key_id     => Chef::Config[:knife][:aws_access_key_id],
+            :aws_secret_access_key => Chef::Config[:knife][:aws_secret_access_key],
+            #  :region                => region
+          })
       end
 
       #
@@ -417,6 +452,20 @@ module Ironfan
       def initialize *args
         super *args
         name :vsphere
+      end
+
+      def fog_connection
+        @fog_connection ||= Ironfan::IaasProvider.new
+=begin for-vsphere
+      @fog_connection ||= Fog::Compute.new({
+        :provider => "vsphere",
+        :vsphere_username => Chef::Config[:knife][:vsphere_username],
+        :vsphere_password => Chef::Config[:knife][:vsphere_password],
+        :vsphere_server => Chef::Config[:knife][:vsphere_server],
+        :vsphere_expected_pubkey_hash => Chef::Config[:knife][:vsphere_expected_pubkey_hash],
+        :vsphere_templates_folder => Chef::Config[:knife][:vsphere_templates_folder],
+      })
+=end
       end
 
       # Utility methods

@@ -57,8 +57,8 @@ module Ironfan
 
     # Fetch latest VMs data from IaaS cloud. VMs data may have already changed since last fetch.
     def fog_servers
-      #@fog_servers ||= Ironfan.fog_servers.select{|fs| fs.key_name == cluster_name.to_s && (fs.state != "terminated") }
-      @fog_servers = Ironfan.fog_servers.select { |fs| fs.is_a_template == false } # for-vsphere
+      #@fog_servers ||= @cloud.fog_servers.select{|fs| fs.key_name == cluster_name.to_s && (fs.state != "terminated") }
+      @fog_servers = @cloud.fog_servers.select { |fs| fs.is_a_template == false } # for-vsphere
     end
 
     # Walk the list of chef nodes and
@@ -136,64 +136,3 @@ module Ironfan
   end # Ironfan::Cluster
 end
 
-module Ironfan
-
-  def self.fog_connection
-    # for-vsphere
-    case :vsphere
-    when :ec2
-      @fog_connection ||= Fog::Compute.new({
-        :provider              => 'AWS',
-        :aws_access_key_id     => Chef::Config[:knife][:aws_access_key_id],
-        :aws_secret_access_key => Chef::Config[:knife][:aws_secret_access_key],
-        #  :region                => region
-      })
-    when :vsphere
-      @fog_connection ||= Iaas::IaasProvider.new
-=begin for-vsphere
-      @fog_connection ||= Fog::Compute.new({
-        :provider => "vsphere",
-        :vsphere_username => Chef::Config[:knife][:vsphere_username],
-        :vsphere_password => Chef::Config[:knife][:vsphere_password],
-        :vsphere_server => Chef::Config[:knife][:vsphere_server],
-        :vsphere_expected_pubkey_hash => Chef::Config[:knife][:vsphere_expected_pubkey_hash],
-        :vsphere_templates_folder => Chef::Config[:knife][:vsphere_templates_folder],
-      })
-=end
-    else
-      raise 'no cloud name specified.'
-    end
-  end
-
-  def self.fog_servers
-    return @fog_servers if @fog_servers
-    Chef::Log.debug("Using fog to catalog all servers")
-    @fog_servers = Ironfan.fog_connection.servers.all
-  end
-
-  def self.fog_addresses
-    return @fog_addresses if @fog_addresses
-    Chef::Log.debug("Using fog to catalog all addresses")
-    @fog_addresses = {}.tap{|hsh| Ironfan.fog_connection.addresses.each{|fa| hsh[fa.public_ip] = fa } }
-  end
-
-  def self.fog_volumes
-    @fog_volumes || fetch_fog_volumes
-  end
-
-  def self.fetch_fog_volumes
-    Chef::Log.debug("Using fog to catalog all volumes")
-    @fog_volumes = Ironfan.fog_connection.volumes
-  end
-
-  def self.fog_keypairs
-    return @fog_keypairs if @fog_keypairs
-    Chef::Log.debug("Using fog to catalog all keypairs")
-    @fog_keypairs = {}.tap{|hsh| Ironfan.fog_connection.key_pairs.each{|kp| hsh[kp.name] = kp } }
-  end
-
-  def safely *args, &block
-    Ironfan.safely(*args, &block)
-  end
-
-end

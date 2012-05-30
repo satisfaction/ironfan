@@ -48,7 +48,7 @@ class Chef
         target.send(:delegate_to_servers, :announce_as_started)
 =end
         section("Powering on VMs of cluster #{cluster_name}")
-        task = Ironfan.fog_connection.start_cluster
+        task = cloud.fog_connection.start_cluster
         begin
           sleep(MONITOR_INTERVAL)
           Chef::Log.debug("progress of starting cluster: #{task.get_progress.inspect}")

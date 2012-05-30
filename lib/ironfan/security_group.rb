@@ -26,22 +26,22 @@ module Ironfan
         get_all
       end
       def self.get_all
-        groups_list = Ironfan.fog_connection.security_groups.all
+        groups_list = cloud.fog_connection.security_groups.all
         @@all = groups_list.inject(Mash.new) do |hsh, fog_group|
           hsh[fog_group.name] = fog_group ; hsh
         end
       end
 
       def get
-        all[name] || Ironfan.fog_connection.security_groups.get(name)
+        all[name] || cloud.fog_connection.security_groups.get(name)
       end
 
       def self.get_or_create(group_name, description)
-        # FIXME: the '|| Ironfan.fog' part is probably unnecessary
-        fog_group = all[group_name] || Ironfan.fog_connection.security_groups.get(group_name)
+        # FIXME: the '|| cloud.fog' part is probably unnecessary
+        fog_group = all[group_name] || cloud.fog_connection.security_groups.get(group_name)
         unless fog_group
           self.step(group_name, "creating (#{description})", :green)
-          fog_group = all[group_name] = Ironfan.fog_connection.security_groups.new(:name => group_name, :description => description, :connection => Ironfan.fog_connection)
+          fog_group = all[group_name] = cloud.fog_connection.security_groups.new(:name => group_name, :description => description, :connection => cloud.fog_connection)
           fog_group.save
         end
         fog_group
