@@ -1,4 +1,4 @@
-module Iaas
+module Ironfan
   class IaasProvider
     attr_reader :servers
     attr_reader :connection_desc

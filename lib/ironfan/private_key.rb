@@ -109,9 +109,9 @@ module Ironfan
     def create_proxy!
       safely do
         step("    key #{name} - creating", :green)
-        @proxy = Ironfan.fog_connection.key_pairs.create(:name => name.to_s)
+        @proxy = cloud.fog_connection.key_pairs.create(:name => name.to_s)
       end
-      Ironfan.fog_keypairs[name] = proxy
+      cloud.fog_keypairs[name] = proxy
       self.body = proxy.private_key
       save
     end
