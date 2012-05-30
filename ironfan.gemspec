@@ -9,12 +9,13 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Infochimps"]
-  s.date = "2012-02-24"
+  s.date = "2012-05-30"
   s.description = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
   s.email = "coders@infochimps.com"
   s.extra_rdoc_files = [
     "LICENSE.md",
-    "README.md"
+    "README.md",
+    "README.textile"
   ]
   s.files = [
     ".gitignore",
@@ -25,6 +26,7 @@ Gem::Specification.new do |s|
     "Guardfile",
     "LICENSE.md",
     "README.md",
+    "README.textile",
     "Rakefile",
     "TODO.md",
     "VERSION",
@@ -34,9 +36,11 @@ Gem::Specification.new do |s|
     "config/ubuntu10.04-ironfan.erb",
     "config/ubuntu11.10-ironfan.erb",
     "ironfan.gemspec",
+    "lib/chef/knife/bootstrap/centos5-vmware.erb",
     "lib/chef/knife/bootstrap/ubuntu10.04-ironfan.erb",
     "lib/chef/knife/bootstrap/ubuntu11.10-ironfan.erb",
     "lib/chef/knife/cluster_bootstrap.rb",
+    "lib/chef/knife/cluster_create.rb",
     "lib/chef/knife/cluster_kick.rb",
     "lib/chef/knife/cluster_kill.rb",
     "lib/chef/knife/cluster_launch.rb",
@@ -49,6 +53,7 @@ Gem::Specification.new do |s|
     "lib/chef/knife/cluster_sync.rb",
     "lib/chef/knife/cluster_vagrant.rb",
     "lib/chef/knife/ironfan_knife_common.rb",
+    "lib/chef/knife/ironfan_monitor.rb",
     "lib/chef/knife/ironfan_script.rb",
     "lib/chef/knife/vagrant/ironfan_environment.rb",
     "lib/chef/knife/vagrant/ironfan_provisioners.rb",
@@ -63,40 +68,16 @@ Gem::Specification.new do |s|
     "lib/ironfan/dsl_object.rb",
     "lib/ironfan/facet.rb",
     "lib/ironfan/fog_layer.rb",
+    "lib/ironfan/iaas_layer.rb",
     "lib/ironfan/private_key.rb",
     "lib/ironfan/role_implications.rb",
     "lib/ironfan/security_group.rb",
     "lib/ironfan/server.rb",
     "lib/ironfan/server_slice.rb",
     "lib/ironfan/volume.rb",
-    "notes/Home.md",
-    "notes/INSTALL-cloud_setup.md",
-    "notes/INSTALL.md",
-    "notes/advanced-superpowers.md",
-    "notes/aws_servers.jpg",
-    "notes/aws_user_key.png",
-    "notes/cookbook-versioning.md",
-    "notes/core_concepts.md",
-    "notes/declaring_volumes.md",
-    "notes/design_notes-aspect_oriented_devops.md",
-    "notes/design_notes-ci_testing.md",
-    "notes/design_notes-cookbook_event_ordering.md",
-    "notes/design_notes-dsl_object.md",
-    "notes/design_notes-meta_discovery.md",
-    "notes/ec2-pricing_and_capacity.md",
-    "notes/homebase-layout.txt",
-    "notes/knife-cluster-commands.md",
-    "notes/named-cloud-objects.md",
-    "notes/opscode_org_key.png",
-    "notes/opscode_user_key.png",
-    "notes/philosophy.md",
-    "notes/rake_tasks.md",
-    "notes/renamed-recipes.txt",
-    "notes/silverware.md",
-    "notes/style_guide.md",
-    "notes/tips_and_troubleshooting.md",
-    "notes/walkthrough-hadoop.md",
-    "notes/walkthrough-web.md",
+    "spec/data/cluster_definition.json",
+    "spec/data/clusters/webserver_demo.rb",
+    "spec/ironfan/cluster_create_spec.rb",
     "spec/ironfan/cluster_spec.rb",
     "spec/ironfan/facet_spec.rb",
     "spec/ironfan/server_slice_spec.rb",
@@ -110,9 +91,9 @@ Gem::Specification.new do |s|
   s.homepage = "http://infochimps.com/labs"
   s.licenses = ["apachev2"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.15"
+  s.rubygems_version = "1.8.11"
   s.summary = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
-  s.test_files = ["spec/ironfan/cluster_spec.rb", "spec/ironfan/facet_spec.rb", "spec/ironfan/server_slice_spec.rb", "spec/ironfan/server_spec.rb", "spec/ironfan_spec.rb", "spec/spec_helper/dummy_chef.rb", "spec/spec_helper.rb", "spec/test_config.rb"]
+  s.test_files = ["spec/data/cluster_definition.json", "spec/data/clusters/webserver_demo.rb", "spec/test_config.rb", "spec/ironfan/facet_spec.rb", "spec/ironfan/cluster_spec.rb", "spec/ironfan/server_slice_spec.rb", "spec/ironfan/server_spec.rb", "spec/ironfan/cluster_create_spec.rb", "spec/ironfan_spec.rb", "spec/spec_helper/dummy_chef.rb", "spec/spec_helper.rb"]
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
