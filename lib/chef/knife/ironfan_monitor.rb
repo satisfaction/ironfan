@@ -11,6 +11,10 @@ module Ironfan
     ACTION_CREATE_VM ||= 'Creating VM'
     ACTION_BOOTSTRAP_VM ||= 'Bootstrapping VM'
 
+    # Error Message
+    ERROR_BOOTSTAP_FAIL ||= 'Bootstrapping VM failed.'
+
+
     # update Ironfan::Server.fog_server with fog_servers returned by CloudManager
     def update_fog_servers(target, fog_servers)
       fog_servers.each do |fog_server|
@@ -87,7 +91,7 @@ module Ironfan
       end
 
       if has_progress
-        report_progress(cluster_name)
+        report_progress(cluster_name, progress.result.error_msg)
       else
         Chef::Log.debug("skip reporting cluster status since no progress")
       end
@@ -105,18 +109,20 @@ module Ironfan
         attrs[:bootstrapped] = true
         attrs[:succeed] = true
         attrs[:status] = STATUS_BOOTSTAP_SUCCEED
+        attrs[:error_msg] = ''
       else
         attrs[:finished] = true
         attrs[:bootstrapped] = false
         attrs[:succeed] = false
         attrs[:status] = STATUS_BOOTSTAP_FAIL
+        attrs[:error_msg] = ERROR_BOOTSTAP_FAIL
       end
       attrs[:action] = ''
       attrs[:progress] = 100
       set_provision_attrs(node, attrs)
       node.save
 
-      report_progress(cluster_name)
+      report_progress(cluster_name, ERROR_BOOTSTAP_FAIL)
     end
 
     # report progress of deleting cluster to MessageQueue
@@ -147,6 +153,7 @@ module Ironfan
       cluster[:success] = progress.result.success
       cluster[:failure] = progress.result.failure
       cluster[:running] = progress.result.running
+      cluster[:error_msg] = progress.result.error_msg
       cluster[:cluster_data] = Mash.new
       cluster[:cluster_data][:name] = cluster_name
 
@@ -157,10 +164,10 @@ module Ironfan
     end
 
     # report cluster provision progress to MessageQueue
-    def report_progress(cluster_name)
+    def report_progress(cluster_name, error_msg = '')
       Chef::Log.debug("Begin reporting status of cluster #{cluster_name}")
 
-      data = get_cluster_data(cluster_name)
+      data = get_cluster_data(cluster_name, error_msg)
 
       # merge nodes data with cluster definition
       groups = data['cluster_data']['groups']
@@ -229,7 +236,7 @@ module Ironfan
     end
 
     # generate cluster nodes data in JSON format
-    def get_cluster_data(cluster_name)
+    def get_cluster_data(cluster_name, error_msg)
       cluster = Mash.new
       cluster[:total] = 0
       cluster[:success] = 0
@@ -238,6 +245,7 @@ module Ironfan
       cluster[:finished] = false
       cluster[:succeed] = nil
       cluster[:progress] = 0
+      cluster[:error_msg] = ''
       cluster[:cluster_data] = Mash.new
       groups = cluster[:cluster_data][:groups] = Mash.new
       nodes = cluster_nodes(cluster_name)
@@ -259,6 +267,7 @@ module Ironfan
       cluster[:progress] /= cluster[:total] if cluster[:total] != 0
       cluster[:finished] = (cluster[:running] == 0)
       cluster[:succeed] = (cluster[:success] == cluster[:total])
+      cluster[:error_msg] = error_msg unless cluster[:succeed]
 
       JSON.parse(cluster.to_json) # convert keys from symbol to string
     end
