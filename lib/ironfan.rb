@@ -196,7 +196,7 @@ module Ironfan
   #
   # @example
   #   Ironfan.safely do
-  #     Ironfan.fog_connection.associate_address(self.fog_server.id, address)
+  #     cloud.fog_connection.associate_address(self.fog_server.id, address)
   #   end
   #
   def self.safely

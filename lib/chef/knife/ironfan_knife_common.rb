@@ -37,7 +37,7 @@ module Ironfan
     end
 
     def initialize_iaas_provider(filename)
-      Iaas::IaasProvider.init(JSON.parse(File.read(filename))) # initialize IaasProvider
+      Ironfan::IaasProvider.init(JSON.parse(File.read(filename))) # initialize IaasProvider
     end
 
     def save_distro_info(filename)
@@ -83,6 +83,14 @@ module Ironfan
 
     def cluster_name
       @name_args[0] # FIXME this will fail when @name_args is [clustername-facet-index]
+    end
+
+    def cluster
+      @cluster ||= Ironfan.load_cluster(cluster_name)
+    end
+
+    def cloud
+      @cloud ||= cluster.cloud
     end
 
     #

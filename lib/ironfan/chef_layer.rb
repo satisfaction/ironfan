@@ -191,11 +191,26 @@ module Ironfan
       end
     end
 
-
     def sync_volume_attributes
-      composite_volumes.each do |vol_name, vol|
-        chef_node.normal[:volumes] ||= Mash.new
-        chef_node.normal[:volumes][vol_name] = vol.to_mash.compact
+      case cloud.name
+      when :ec2
+        composite_volumes.each do |vol_name, vol|
+          chef_node.normal[:volumes] ||= Mash.new
+          chef_node.normal[:volumes][vol_name] = vol.to_mash.compact
+        end
+      when :vsphere
+        Chef::Log.debug("Volumes of VM #{fog_server.name}: #{fog_server.volumes}")
+        mount_point_to_device = {}
+        device_to_disk = {}
+        fog_server.volumes.each do |disk|
+          # disk should equal to '/dev/sdb' or 'dev/sdc', etc.
+          device = disk + '1'
+          mount_point = '/mnt/' + device.split('/').last
+          mount_point_to_device[mount_point] = device
+          device_to_disk[device] = disk
+        end
+        @chef_node.normal[:disk][:data_disks]  = mount_point_to_device
+        @chef_node.normal[:disk][:disk_devices] = device_to_disk
       end
     end
 

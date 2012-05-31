@@ -36,7 +36,7 @@ class Chef
         target.send(:delegate_to_servers, :announce_as_stopped)
 =end
         section("Shutdowning VMs of cluster #{cluster_name}")
-        task = Ironfan.fog_connection.stop_cluster
+        task = cloud.fog_connection.stop_cluster
         begin
           sleep(MONITOR_INTERVAL)
           Chef::Log.debug("progress of stopping cluster: #{task.get_progress.inspect}")
