@@ -1,3 +1,5 @@
+require 'cloud_manager'
+
 module Ironfan
   class IaasProvider
     attr_reader :servers
@@ -46,7 +48,3 @@ module Ironfan
     end
   end
 end
-
-require File.expand_path('../../../cloud-manager/spec/config', File.dirname(__FILE__))
-require 'cloud_manager'
-require File.expand_path('../../../cloud-manager/spec/fog_dummy', File.dirname(__FILE__))
