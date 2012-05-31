@@ -100,6 +100,10 @@ class Chef
           if !task.get_result.succeed?
             die('Creating cluster vms failed. Abort!', CREATE_FAILURE)
           end
+
+          # Sync attached disks info and other info to Chef
+          section("Sync'ing to chef after cluster VMs are created")
+          target.sync_to_chef
           # END
         end
 

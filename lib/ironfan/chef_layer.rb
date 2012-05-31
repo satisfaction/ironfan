@@ -192,6 +192,7 @@ module Ironfan
     end
 
     def sync_volume_attributes
+      step("    updating volume attributes")
       case cloud.name
       when :ec2
         composite_volumes.each do |vol_name, vol|
@@ -199,7 +200,7 @@ module Ironfan
           chef_node.normal[:volumes][vol_name] = vol.to_mash.compact
         end
       when :vsphere
-        Chef::Log.debug("Volumes of VM #{fog_server.name}: #{fog_server.volumes}")
+        return if fog_server.nil? or fog_server.volumes.nil? or fog_server.volumes.empty?
         mount_point_to_device = {}
         device_to_disk = {}
         fog_server.volumes.each do |disk|
