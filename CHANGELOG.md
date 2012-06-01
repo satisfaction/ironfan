@@ -1,3 +1,8 @@
+# 3.1.4.serengeti.1: Make Ironfan work against vSphere 5.0 in addition to EC2
+
+* Refactor Ironfan code architecture to support multi cloud providers gracefully
+* Add full support for VMware vSphere cloud
+
 # v3.1.4: The inevitable post-launch tweaks
 
 * Lots of documentation fixes, thanks @sya!

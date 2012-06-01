@@ -1,4 +1,8 @@
-h1. Note: this is a fork to make cluster_chef work for vSphere 5.0.
+h1. Note: this is a fork to make Ironfan work against vSphere 5.0 in addition to EC2.
+
+h2. Major changes in this fork
+* Refactor Ironfan code architecture to support multi cloud providers gracefully
+* Add full support for VMware vSphere cloud (also provide modified cookbooks for vSphere cloud)
 
 h1. "Version 3 alpha":https://github.com/infochimps/cluster_chef/tree/version_3 now available!
 
