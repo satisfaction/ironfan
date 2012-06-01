@@ -59,7 +59,10 @@ module Ironfan
     end
 
     def monitor_iaas_action_progress(cluster_name, progress, is_last_action = false)
-      return if progress.result.servers.empty?
+      if progress.result.servers.empty?
+        report_refined_progress(cluster_name, progress)
+        return
+      end
 
       has_progress = false
       progress.result.servers.each do |vm|
