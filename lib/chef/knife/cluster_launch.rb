@@ -87,7 +87,7 @@ class Chef
           start_monitor_launch(cluster_name)
           task = cloud.fog_connection.create_cluster
           while !task.finished?
-            sleep(MONITOR_INTERVAL)
+            sleep(monitor_interval)
             Chef::Log.debug("Reporting progress of creating cluster vms: #{task.get_progress.inspect}")
             monitor_launch_progress(cluster_name, task.get_progress)
           end

@@ -37,11 +37,11 @@ class Chef
 =end
         section("Shutdowning VMs of cluster #{cluster_name}")
         task = cloud.fog_connection.stop_cluster
-        begin
-          sleep(MONITOR_INTERVAL)
-          Chef::Log.debug("progress of stopping cluster: #{task.get_progress.inspect}")
+        while !task.finished?
+          sleep(monitor_interval)
           monitor_stop_progress(cluster_name, task.get_progress)
-        end while !task.finished?
+        end
+        monitor_stop_progress(cluster_name, task.get_progress)
 
         if !task.get_result.succeed?
           die('Shutdowning VMs of cluster failed. Abort!', 1)

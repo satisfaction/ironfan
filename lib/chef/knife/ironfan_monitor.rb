@@ -58,12 +58,6 @@ module Ironfan
       report_progress(cluster_name)
     end
 
-    # Monitor the progress of cluster creation
-    def monitor_launch_progress(cluster_name, progress)
-      Chef::Log.debug('update launch progress of servers within this cluster')
-      monitor_iaas_action_progress(cluster_name, progress)
-    end
-
     def monitor_iaas_action_progress(cluster_name, progress, is_last_action = false)
       return if progress.result.servers.empty?
 
@@ -125,21 +119,27 @@ module Ironfan
       report_progress(cluster_name, ERROR_BOOTSTAP_FAIL)
     end
 
+    # Monitor the progress of cluster creation
+    def monitor_launch_progress(cluster_name, progress)
+      Chef::Log.debug("Begin reporting progress of launching cluster #{cluster_name}: #{progress.inspect}")
+      monitor_iaas_action_progress(cluster_name, progress)
+    end
+
     # report progress of deleting cluster to MessageQueue
     def monitor_delete_progress(cluster_name, progress)
-      Chef::Log.debug("Begin reporting progress of deleting cluster #{cluster_name}")
-      report_refined_progress(cluster_name, progress)
+      Chef::Log.debug("Begin reporting progress of deleting cluster #{cluster_name}: #{progress.inspect}")
+      monitor_iaas_action_progress(cluster_name, progress, true)
     end
 
     # report progress of stopping cluster to MessageQueue
     def monitor_stop_progress(cluster_name, progress)
-      Chef::Log.debug("Begin reporting progress of stopping cluster #{cluster_name}")
+      Chef::Log.debug("Begin reporting progress of stopping cluster #{cluster_name}: #{progress.inspect}")
       monitor_iaas_action_progress(cluster_name, progress, true)
     end
 
     # report progress of starting cluster to MessageQueue
     def monitor_start_progress(cluster_name, progress, is_last_action)
-      Chef::Log.debug("Begin reporting progress of starting cluster #{cluster_name}")
+      Chef::Log.debug("Begin reporting progress of starting cluster #{cluster_name}: #{progress.inspect}")
       monitor_iaas_action_progress(cluster_name, progress, is_last_action)
     end
 
@@ -221,6 +221,10 @@ module Ironfan
       else
         return false
       end
+    end
+
+    def monitor_interval
+      Chef::Config[:knife][:monitor_interval] || MONITOR_INTERVAL
     end
 
     def cluster_nodes(cluster_name)
