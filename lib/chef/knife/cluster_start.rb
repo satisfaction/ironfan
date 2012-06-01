@@ -49,11 +49,11 @@ class Chef
 =end
         section("Powering on VMs of cluster #{cluster_name}")
         task = cloud.fog_connection.start_cluster
-        begin
-          sleep(MONITOR_INTERVAL)
-          Chef::Log.debug("progress of starting cluster: #{task.get_progress.inspect}")
+        while !task.finished?
+          sleep(monitor_interval)
           monitor_start_progress(cluster_name, task.get_progress, !config[:bootstrap])
-        end while !task.finished?
+        end
+        monitor_start_progress(cluster_name, task.get_progress, !config[:bootstrap])
 
         update_fog_servers(target, task.get_progress.result.servers)
         display(target)

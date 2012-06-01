@@ -50,12 +50,11 @@ class Chef
 
         section("Deleting Cloud Machines")
         task = cloud.fog_connection.delete_cluster
-        begin
-          sleep(MONITOR_INTERVAL)
-          Chef::Log.debug("progress of deleting cluster: #{task.get_progress.inspect}")
-          section("Reporting progress of deleting cluster", :green)
+        while !task.finished?
+          sleep(monitor_interval)
           monitor_delete_progress(cluster_name, task.get_progress)
-        end while !task.finished?
+        end
+        monitor_delete_progress(cluster_name, task.get_progress)
 
         if !task.get_result.succeed?
           die('Deleting VMs of cluster failed. Abort!', 1)

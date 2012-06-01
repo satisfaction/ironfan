@@ -236,7 +236,7 @@ module Ironfan
         section("Bootstrapping machines in facet #{name}", :green)
         monitor_thread = Thread.new(cluster_name) do |name|
           while true
-            sleep(Ironfan::Monitor::MONITOR_INTERVAL)
+            sleep(monitor_interval)
             report_progress(name)
           end
         end
