@@ -84,7 +84,7 @@ class Chef
           section("Creating machines in Cloud", :green)
           ## target.create_servers(true) # FIXME
           # BEGIN for-vsphere
-          start_monitor_launch(cluster_name)
+          start_monitor_progess(cluster_name)
           task = cloud.fog_connection.create_cluster
           while !task.finished?
             sleep(monitor_interval)

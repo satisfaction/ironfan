@@ -49,6 +49,7 @@ class Chef
         display(target)
 
         section("Deleting Cloud Machines")
+        start_monitor_progess(cluster_name)
         task = cloud.fog_connection.delete_cluster
         while !task.finished?
           sleep(monitor_interval)
