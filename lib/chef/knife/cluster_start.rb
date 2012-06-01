@@ -48,6 +48,7 @@ class Chef
         target.send(:delegate_to_servers, :announce_as_started)
 =end
         section("Powering on VMs of cluster #{cluster_name}")
+        start_monitor_progess(cluster_name)
         task = cloud.fog_connection.start_cluster
         while !task.finished?
           sleep(monitor_interval)

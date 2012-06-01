@@ -23,26 +23,8 @@ module Ironfan
       end
     end
 
-    def start_monitor_launch(cluster_name)
-      Chef::Log.debug("Initialize monitoring of launch progress of cluster #{cluster_name}")
-      nodes = cluster_nodes(cluster_name)
-      nodes.each do |node|
-
-        attrs = get_provision_attrs(node)
-        attrs[:finished] = false
-        attrs[:succeed] = nil
-        attrs[:progress] = 0
-        attrs[:action] = ACTION_CREATE_VM
-        attrs[:status] ||= STATUS_VM_NOT_EXIST
-        set_provision_attrs(node, attrs)
-        node.save
-      end
-
-      # report_progress(cluster_name) # Don't report because vm_name is nil
-    end
-
     def start_monitor_bootstrap(cluster_name)
-      Chef::Log.debug("Initialize monitoring of bootstrap progress of cluster #{cluster_name}")
+      Chef::Log.debug("Initialize monitoring bootstrap progress of cluster #{cluster_name}")
       nodes = cluster_nodes(cluster_name)
       nodes.each do |node|
         attrs = get_provision_attrs(node)
@@ -56,6 +38,20 @@ module Ironfan
       end
 
       report_progress(cluster_name)
+    end
+
+    def start_monitor_progess(cluster_name)
+      Chef::Log.debug("Initialize monitoring progress of cluster #{cluster_name}")
+      nodes = cluster_nodes(cluster_name)
+      nodes.each do |node|
+        attrs = get_provision_attrs(node)
+        attrs[:finished] = false
+        attrs[:succeed] = nil
+        attrs[:progress] = 0
+        attrs[:action] = ''
+        set_provision_attrs(node, attrs)
+        node.save
+      end
     end
 
     def monitor_iaas_action_progress(cluster_name, progress, is_last_action = false)
@@ -78,7 +74,10 @@ module Ironfan
 
         # Save progress data to ChefNode
         node = Chef::Node.load(vm.name)
-        if node[:provision] and node[:provision][:progress] == attrs[:progress]
+        if (node[:provision] and
+            node[:provision][:progress] == attrs[:progress] and
+            node[:provision][:action] == attrs[:action])
+
           Chef::Log.debug("skip updating server #{vm.name} since no progress")
           next
         end
