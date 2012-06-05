@@ -1,8 +1,7 @@
 {
   "cluster_definition": {
-    "channel_id": "channel_1",
     "name": "hadoop_cluster_test",
-    "template_id": "centos-5.7-template",
+    "template_id": "the_vm_template_id",
     "distro": "apache",
     "distro_map": {
        "hadoop": "http://localhost/distros/apache/hadoop.tar.gz",
@@ -12,30 +11,30 @@
     "groups": [
       {
         "name": "master",
-        "roles": ["hadoop", "hadoop_namenode", "hadoop_jobtracker"],
+        "roles": ["hadoop_namenode", "hadoop_jobtracker"],
         "instance_num": 1,
         "cpu": 2, // CPU core number
         "memory": 2048, // 2048M
         "networking": {
-          "port_group": "CFNetwork"
+          "port_group": "VM Network"
         },
         "storage": {
           "type": "shared",
-          "size": 5 // 5G
+          "size": 10 // 10G
         }
       },
       {
         "name": "worker",
-        "roles": ["hadoop", "hadoop_worker"],
+        "roles": ["hadoop_datanode", "hadoop_tasktracker"],
         "instance_num": 3,
-        "cpu": 1,
-        "memory": 1024,
+        "cpu": 2,
+        "memory": 2048,
         "networking": {
-          "port_group": "CFNetwork"
+          "port_group": "VM Network"
         },
         "storage": {
-          "type": "shared",
-          "size": 5
+          "type": "local",
+          "size": 50
         }
       },
       {
@@ -45,29 +44,37 @@
         "cpu": 1,
         "memory": 1024,
         "networking": {
-          "port_group": "CFNetwork"
+          "port_group": "VM Network"
         },
         "storage": {
           "type": "shared",
-          "size": 5
+          "size": 20
         }
       }
     ]
   },
   "cloud_provider": {
     "name": "vsphere",
-    "vc_addr": "10.141.7.39",
+    "vc_addr": "vc_server_ip",
     "vc_user": "administrator",
-    "vc_pwd": "ca$hc0w",
-    "vc_datacenter": "Datacenter2012",
+    "vc_pwd": "the_password",
+    "vc_datacenter": "the_datacenter_name",
     "vc_clusters": [
       {
         "name": "cluster-ironfan",
         "vc_rps": ["IronfanRP"]
       }
     ],
-    "vc_shared_datastore_pattern": [ "ds-ironfan" ],
-    "vc_local_datastore_pattern": [ "ds-ironfan" ],
+    "vc_shared_datastore_pattern": [ "ds-shared*" ],
+    "vc_local_datastore_pattern": [ "ds-local*" ],
     "cloud_adapter": "fog"
+  },
+  "system_properties": {
+    "rabbitmq_host": "localhost",
+    "rabbitmq_port": 5672,
+    "rabbitmq_username": "",
+    "rabbitmq_password": "",
+    "rabbitmq_exchange": "bddtask",
+    "rabbitmq_channel": "task.1"
   }
 }

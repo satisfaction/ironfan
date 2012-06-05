@@ -21,9 +21,11 @@ require 'ironfan/private_key'       # coordinate chef keys, cloud keypairs, etc
 require 'ironfan/role_implications' # make roles trigger other actions (security groups, etc)
 #
 require 'ironfan/chef_layer'        # interface to chef for server actions
-require 'ironfan/fog_layer'         # interface to fog  for server actions
 #
 require 'ironfan/deprecated'        # stuff slated to go away
+#
+require 'ironfan/vsphere/cluster'
+require 'ironfan/ec2/cluster'
 
 module Ironfan
 
@@ -52,7 +54,7 @@ module Ironfan
   # Defines a cluster with the given name.
   #
   # @example
-  #   Ironfan.cluster 'demosimple' do
+  #   Ironfan.cluster :ec2, 'demosimple' do
   #     cloud :ec2 do
   #       availability_zones  ['us-east-1d']
   #       flavor              "t1.micro"
@@ -68,9 +70,8 @@ module Ironfan
   #   end
   #
   #
-  def self.cluster(name, attrs={}, &block)
-    name = name.to_sym
-    cl = ( self.clusters[name] ||= Ironfan::Cluster.new(name, attrs) )
+  def self.cluster(provider, name, attrs = {}, &block)
+    cl = ( self.clusters[name] ||= self.new_cluster(provider, name, attrs) )
     cl.configure(&block)
     cl
   end
@@ -136,10 +137,11 @@ module Ironfan
     end
 
     # create new Cluster object
-    cluster = Ironfan.cluster(cluster_name)
-    # FIXME these properties of cloud should not be hard coded in future
-    cluster.cloud :vsphere
-    cluster.cloud.flavor "default"
+    cloud_provider_def = JSON.parse(File.read(cluster_def_file))['cloud_provider']
+    cloud_provider_name = cloud_provider_def['name'].to_sym
+    cluster = Ironfan.cluster(cloud_provider_name, cluster_name)
+    cluster.cloud cloud_provider_name
+    cluster.cloud.flavor 'default' # FIXME: should not be hard coded in future
 
     cluster_def.each do |key, value|
       case key
@@ -150,7 +152,9 @@ module Ironfan
         end
       when 'template_id'
         # cluster.cloud.image_name value
-        cluster.cloud.image_name 'centos5'  # FIXME
+        cluster.cloud.image_name 'centos5' # FIXME: should not be hard coded in future
+      when 'flavor'
+        cluster.cloud.flavor value
       when 'roles'
         value.each do |role|
           cluster.role role
@@ -162,7 +166,7 @@ module Ironfan
           facet_def.each do |key, value|
             case key
             when 'template_id'
-              facet.cloud(:vsphere).image_name value
+              facet.cloud(cloud_provider_name).image_name value
             when 'instance_num'
               facet.instances value
             when 'roles'
@@ -207,5 +211,25 @@ module Ironfan
       Chef::Log.error( boom )
       Chef::Log.error( boom.backtrace.join("\n") )
     end
+  end
+
+  protected
+
+  # Create a new Cluster instance with the specified provider type and name
+  def self.new_cluster(provider, name, attrs)
+    provider = provider.to_sym
+    name = name.to_sym
+
+    cluster =
+      case provider
+      when :ec2
+        Ironfan::Ec2::Cluster.new(name, attrs)
+      when :vsphere
+        Ironfan::Vsphere::Cluster.new(name, attrs)
+      else
+        raise "Unknown cloud provider #{provider.inspect}. Only supports :ec2 and :vsphere so far."
+      end
+
+    cluster
   end
 end

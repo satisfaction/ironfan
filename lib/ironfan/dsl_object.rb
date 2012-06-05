@@ -120,5 +120,15 @@ module Ironfan
 
     # helper method for debugging only
     def dump(*args) args.each{|arg| Chef::Log.debug( arg.inspect ) } end
+
+    protected
+
+    # Utility method for defining abstract methods
+    def raise_not_implemented
+      caller[0] =~ /`(.*?)'/
+      caller_method = $1
+      raise NotImplementedError.new("Must implement method '#{caller_method}' in subclass")
+    end
+
   end
 end

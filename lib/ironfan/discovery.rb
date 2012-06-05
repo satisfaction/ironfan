@@ -2,12 +2,10 @@ module Ironfan
   class Cluster
 
     def discover!
-      @aws_instance_hash = {}
       discover_ironfan!
       discover_chef_nodes!
       discover_fog_servers!  unless Ironfan.chef_config[:cloud] == false
       discover_chef_clients!
-      discover_volumes!
     end
 
     def chef_clients
@@ -57,8 +55,7 @@ module Ironfan
 
     # Fetch latest VMs data from IaaS cloud. VMs data may have already changed since last fetch.
     def fog_servers
-      #@fog_servers ||= @cloud.fog_servers.select{|fs| fs.key_name == cluster_name.to_s && (fs.state != "terminated") }
-      @fog_servers = @cloud.fog_servers.select { |fs| fs.is_a_template == false } # for-vsphere
+      @fog_servers = @cloud.fog_servers
     end
 
     # Walk the list of chef nodes and
@@ -101,7 +98,7 @@ module Ironfan
       fog_servers.each do |fs|
         if fs.tags && fs.tags["cluster"] && fs.tags["facet"] && fs.tags["index"] && fs.tags["cluster"] == cluster_name.to_s
           svr = Ironfan::Server.get(fs.tags["cluster"], fs.tags["facet"], fs.tags["index"])
-        elsif fs.name.start_with?(cluster_name.to_s + '-') # for-vsphere
+        elsif fs.name.start_with?(cluster_name.to_s + '-')
           svr = Ironfan::Server.get_by_name(fs.name)
         elsif @aws_instance_hash[fs.id]
           svr = @aws_instance_hash[fs.id]
@@ -123,14 +120,6 @@ module Ironfan
         end
         svr.fog_server = fs
       end
-    end
-
-    def discover_volumes!
-      servers.each(&:discover_volumes!)
-    end
-
-    def discover_addresses!
-      servers.each(&:discover_addresses!)
     end
 
   end # Ironfan::Cluster

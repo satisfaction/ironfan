@@ -1,5 +1,4 @@
 require 'chef/knife'
-require File.expand_path('../../../ironfan/iaas_layer', File.realpath(__FILE__)) # FIXME
 
 module Ironfan
   module KnifeCommon
@@ -9,6 +8,9 @@ module Ironfan
     FAILURE ||= 1
     CREATE_FAILURE ||= 2
     BOOTSTRAP_FAILURE ||= 3
+    DELETE_FAILURE ||= 4
+    STOP_FAILURE ||= 5
+    START_FAILURE ||= 6
 
     def self.load_deps
       require 'formatador'
@@ -20,20 +22,24 @@ module Ironfan
     def load_ironfan
       $LOAD_PATH << File.join(Chef::Config[:ironfan_path], '/lib') if Chef::Config[:ironfan_path]
       require 'ironfan'
+      require 'ironfan/monitor'
+      extend Ironfan::Monitor
+
       $stdout.sync = true
       Ironfan.ui          = self.ui
       Ironfan.chef_config = self.config
 
       Chef::Log::Formatter.show_time = true # initialize logger
 
-      # for-vsphere
-      initialize_ironfan_broker
+      initialize_ironfan_broker(config[:from_file]) if config[:from_file] # for :vsphere cloud
     end
 
-    def initialize_ironfan_broker
-      initialize_iaas_provider(config[:from_file])
-      save_distro_info(config[:from_file])
-      save_message_queue_server_info(config[:from_file])
+    def initialize_ironfan_broker(config_file)
+      require 'ironfan/iaas_layer'
+
+      initialize_iaas_provider(config_file)
+      save_distro_info(config_file)
+      save_message_queue_server_info(config_file)
     end
 
     def initialize_iaas_provider(filename)
@@ -82,7 +88,11 @@ module Ironfan
     end
 
     def cluster_name
-      @name_args[0] # FIXME this will fail when @name_args is [clustername-facet-index]
+      if @name_args.length > 0
+        return @name_args[0] # when @name_args is [clustername facet index]
+      else
+        return @name_args[0].split('-')[0] # when @name_args is [clustername-facet-index]
+      end
     end
 
     def cluster
@@ -141,6 +151,7 @@ module Ironfan
     #
     def get_relevant_slice( *predicate )
       full_target = get_slice( *predicate )
+      ui.info("Finding relevant servers to #{sub_command}:")
       display(full_target) do |svr|
         rel = relevant?(svr)
         { :relevant? => (rel ? "[blue]#{rel}[reset]" : '-' ) }
@@ -200,7 +211,7 @@ module Ironfan
       bootstrap.config[:ssh_user]       = config[:ssh_user]       || server.cloud.ssh_user
       bootstrap.config[:ssh_password]   = config[:ssh_password]
       bootstrap.config[:attribute]      = config[:attribute]
-      bootstrap.config[:identity_file]  = config[:identity_file]  || server.cloud.ssh_identity_file if server.cloud.name == :ec2
+      bootstrap.config[:identity_file]  = config[:identity_file]  || server.cloud.ssh_identity_file
       bootstrap.config[:distro]         = config[:distro]         || server.cloud.bootstrap_distro
       bootstrap.config[:use_sudo]       = true unless config[:use_sudo] == false
       bootstrap.config[:chef_node_name] = server.fullname
@@ -225,11 +236,13 @@ module Ironfan
         end
       end
 
-      ui.warn "Bootstrapping #{hostname} completed with exit status #{ret.to_s}"
+      ui.info "Bootstrapping #{hostname} completed with exit status #{ret.to_s}"
       ret
     end
 
     def bootstrap_cluster(cluster_name, target)
+      return if target.empty?
+
       start_monitor_bootstrap(cluster_name)
       exit_status = []
       target.cluster.facets.each do |name, facet|
@@ -241,7 +254,7 @@ module Ironfan
           end
         end
 
-        servers = target.select { |svr| svr.facet_name == facet.name }
+        servers = target.select { |svr| svr.facet_name == facet.name and svr.in_cloud? }
         # As each server finishes, configure it
         watcher_threads = servers.parallelize do |svr|
           exit_value = bootstrap_server(svr)

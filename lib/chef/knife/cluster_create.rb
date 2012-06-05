@@ -38,10 +38,14 @@ class Chef
         option name, Chef::Knife::ClusterLaunch.options[name]
       end
 
+      def relevant?(server)
+        # always perform creating action on all servers in order to support re-run 'cluster create' after 'cluster create' failed,
+        # otherwise, re-run 'cluster create' will skip bootstrap action even if '--bootstrap' is specified.
+        true
+      end
+
       def run
         load_ironfan
-        die(banner) if @name_args.empty?
-        configure_dry_run
 
         section("Creating cluster file", :green)
         Ironfan.create_cluster(config[:from_file], config[:yes])

@@ -4,11 +4,12 @@ module Ironfan
   # at resolve time; if the facet explicitly sets any attributes they will win out.
   #
   class Cluster < Ironfan::ComputeBuilder
-    attr_reader :facets, :undefined_servers
+    attr_reader :facets, :undefined_servers, :provider
     has_keys :hadoop_distro
 
-    def initialize(name, attrs={})
+    def initialize(provider, name, attrs={})
       super(name.to_sym, attrs)
+      @provider          = provider.to_sym
       @cluster           = self
       @facets            = Mash.new
       @chef_roles        = []
@@ -51,7 +52,7 @@ module Ironfan
     #
     def facet(facet_name, attrs={}, &block)
       facet_name = facet_name.to_sym
-      @facets[facet_name] ||= Ironfan::Facet.new(self, facet_name, attrs)
+      @facets[facet_name] ||= new_facet(self, facet_name, attrs)
       @facets[facet_name].configure(attrs, &block)
       @facets[facet_name]
     end
@@ -68,7 +69,7 @@ module Ironfan
     #
     # @return [Ironfan::ServerSlice] slice containing all servers
     def servers
-      svrs = @facets.sort.map{|name, facet| facet.servers.to_a }
+      svrs = @facets.map{ |name, facet| facet.servers.to_a }
       Ironfan::ServerSlice.new(self, svrs.flatten)
     end
 
@@ -84,7 +85,7 @@ module Ironfan
     #
     # @return [Ironfan::ServerSlice] the requested slice
     def slice facet_name=nil, slice_indexes=nil
-      return Ironfan::ServerSlice.new(self, self.servers) if facet_name.nil?
+      return servers if facet_name.nil?
       find_facet(facet_name).slice(slice_indexes)
     end
 
@@ -106,7 +107,7 @@ module Ironfan
     #
     def render()
       @@CLUSTER_TEMPLATE ||= %q{
-Ironfan.cluster <%= @cluster.name.to_s.inspect %> do
+Ironfan.cluster <%= @cluster.provider.inspect %>, <%= @cluster.name.to_s.inspect %> do
 
   hadoop_distro <%= @cluster.hadoop_distro.inspect %>
 
@@ -149,17 +150,6 @@ end
     end
 
   protected
-
-    def after_cloud_created(attrs)
-      create_cluster_security_group if self.cloud.name == :ec2 and !attrs[:no_security_group]
-    end
-
-    # Create a security group named for the cluster
-    # that is friends with everything in the cluster
-    def create_cluster_security_group
-      clname = self.name # put it in scope
-      cloud.security_group(clname){ authorize_group(clname) }
-    end
 
     # Creates a chef role named for the cluster
     def create_cluster_role

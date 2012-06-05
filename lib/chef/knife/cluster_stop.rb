@@ -28,29 +28,15 @@ class Chef
       end
 
       def perform_execution(target)
-        # BEGIN for-vsphere
-=begin ironfan's code
-        section("Stopping machines")
-        super(target)
+        section("Stopping cluster #{cluster_name}")
+        ret = super(target)
+        die('Stopping cluster failed. Abort!', STOP_FAILURE) if !ret
+
         section("Announcing Chef nodes as stopped")
         target.send(:delegate_to_servers, :announce_as_stopped)
-=end
-        section("Shutdowning VMs of cluster #{cluster_name}")
-        start_monitor_progess(cluster_name)
-        task = cloud.fog_connection.stop_cluster
-        while !task.finished?
-          sleep(monitor_interval)
-          monitor_stop_progress(cluster_name, task.get_progress)
-        end
-        monitor_stop_progress(cluster_name, task.get_progress)
-
-        if !task.get_result.succeed?
-          die('Shutdowning VMs of cluster failed. Abort!', 1)
-        end
 
         section("Stopping cluster completed.")
-        return 0
-        # END
+        ret
       end
 
       def confirm_execution(target)

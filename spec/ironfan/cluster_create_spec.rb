@@ -35,14 +35,14 @@ describe Ironfan do
     it 'facet master is correct' do
       facet = @cluster.facet(:master)
       facet.name.should == :master
-      facet.run_list.should == ["role[hadoop]", "role[hadoop_namenode]", "role[hadoop_jobtracker]"]
+      facet.run_list.should == ["role[hadoop_namenode]", "role[hadoop_jobtracker]"]
       facet.instances.should == 1
     end
 
     it 'facet worker is correct' do
       facet = @cluster.facet(:worker)
       facet.name.should == :worker
-      facet.run_list.should == ["role[hadoop]", "role[hadoop_worker]"]
+      facet.run_list.should == ["role[hadoop_datanode]", "role[hadoop_tasktracker]"]
       facet.instances.should == 3
     end
 
