@@ -22,7 +22,6 @@ require File.expand_path('cluster_bootstrap',    File.dirname(__FILE__))
 class Chef
   class Knife
     class ClusterLaunch < Ironfan::Script
-      include Ironfan::KnifeCommon
 
       deps do
         require 'time'
@@ -55,69 +54,32 @@ class Chef
         :boolean     => true,
         :default     => false
 
-      def run
-        load_ironfan
-        die(banner) if @name_args.empty?
-        configure_dry_run
+      def relevant?(server)
+        server.launchable?
+      end
 
-        #
-        # Load the facet
-        #
-        full_target = get_slice(*@name_args)
-        display(full_target)
+      def perform_execution(target)
+        # Pre-populate information in chef
+        section("Sync'ing to chef and cloud")
+        target.sync_to_cloud
+        target.sync_to_chef
 
-        target = full_target
-        # FIXME BEGIN vsphere: bypass this logic
-        ## target = full_target.select(&:launchable?)
-        ## warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
-        # END
+        # Launch servers
+        section("Creating machines in Cloud", :green)
+        ret = target.create_servers
+        die('Creating cluster VMs failed. Abort!', CREATE_FAILURE) if !ret
 
-        if target.empty?
-          section("All servers are running -- not launching any.", :green)
-        else
-          # Pre-populate information in chef
-          section("Sync'ing to chef and cloud")
-          target.sync_to_cloud
-          target.sync_to_chef
-
-          # Launch servers
-          section("Creating machines in Cloud", :green)
-          ## target.create_servers(true) # FIXME
-          # BEGIN for-vsphere
-          start_monitor_progess(cluster_name)
-          task = cloud.fog_connection.create_cluster
-          while !task.finished?
-            sleep(monitor_interval)
-            Chef::Log.debug("Reporting progress of creating cluster vms: #{task.get_progress.inspect}")
-            monitor_launch_progress(cluster_name, task.get_progress)
-          end
-          Chef::Log.debug("result of creating cluster vms: #{task.get_progress.inspect}")
-          update_fog_servers(target, task.get_progress.result.servers)
-
-          Chef::Log.debug("Reporting final status of creating cluster VMs")
-          monitor_launch_progress(cluster_name, task.get_progress)
-
-          if !task.get_result.succeed?
-            die('Creating cluster vms failed. Abort!', CREATE_FAILURE)
-          end
-
-          # Sync attached disks info and other info to Chef
-          section("Sync'ing to chef after cluster VMs are created")
-          target.sync_to_chef
-          # END
-        end
-
-        ui.info("")
-        display(target)
+        # Sync attached disks info and other info to Chef
+        section("Sync'ing to chef after cluster VMs are created")
+        target.sync_to_chef
 
         exit_status = 0
         if config[:bootstrap]
-          exit_status = bootstrap_cluster(cluster_name, target)
           display(target)
+          exit_status = bootstrap_cluster(cluster_name, target)
         end
 
-        section("Launching cluster completed.")
-
+        section("Creating cluster completed.")
         exit_status
       end
 

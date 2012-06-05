@@ -53,7 +53,7 @@ module Ironfan
     #
     def server(idx, attrs={}, &block)
       idx = idx.to_i
-      @servers[idx] ||= Ironfan::Server.new(self, idx)
+      @servers[idx] ||= new_server(self, idx)
       @servers[idx].configure(attrs, &block)
       @servers[idx]
     end
@@ -109,14 +109,6 @@ module Ironfan
     end
 
   protected
-
-    def after_cloud_created(attrs)
-      create_facet_security_group if self.cloud.name == :ec2 and !attrs[:no_security_group]
-    end
-
-    def create_facet_security_group
-      cloud.security_group("#{cluster_name}-#{facet_name}")
-    end
 
     # Creates a chef role named for the facet
     def create_facet_role

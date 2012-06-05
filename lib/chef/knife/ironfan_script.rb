@@ -17,12 +17,10 @@
 #
 
 require File.expand_path('ironfan_knife_common', File.dirname(__FILE__))
-require File.expand_path('ironfan_monitor', File.dirname(__FILE__))
 
 module Ironfan
   class Script < Chef::Knife
     include Ironfan::KnifeCommon
-    include Ironfan::Monitor
 
     deps do
       Ironfan::KnifeCommon.load_deps
@@ -49,13 +47,15 @@ module Ironfan
       die(banner) if @name_args.empty?
       configure_dry_run
 
-      ## target = get_relevant_slice(* @name_args)
-      ## die("No nodes to #{sub_command}, exiting", 1) if target.empty?
-      target = get_slice(*@name_args)
+      target = get_relevant_slice(* @name_args)
+      if target.empty?
+        ui.info("No nodes to #{sub_command}, exiting")
+        exit 0
+      end
 
-      ui.info(["\n",
-          ui.color("Running #{sub_command}", :cyan),
-          " on #{target.joined_names}..."].join())
+      ui.info(["\n", ui.color("Running #{sub_command}", :cyan), " on #{target.joined_names} ..."].join())
+      display(target)
+
       unless config[:yes]
         ui.info("")
         confirm_execution(target)

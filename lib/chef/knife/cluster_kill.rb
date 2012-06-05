@@ -39,50 +39,27 @@ class Chef
         :boolean     => true,
         :default     => true
 
-      # BEGIN for-vsphere
-      def run
-        load_ironfan
-        die(banner) if @name_args.empty?
-        configure_dry_run
-
-        target = get_slice(*@name_args)
-        display(target)
-
-        section("Deleting Cloud Machines")
-        start_monitor_progess(cluster_name)
-        task = cloud.fog_connection.delete_cluster
-        while !task.finished?
-          sleep(monitor_interval)
-          monitor_delete_progress(cluster_name, task.get_progress)
-        end
-        monitor_delete_progress(cluster_name, task.get_progress)
-
-        if !task.get_result.succeed?
-          die('Deleting VMs of cluster failed. Abort!', 1)
-        end
-
-        section("Deleting Chef Nodes")
-        target.select(&:in_chef? ).delete_chef
-        section("Deleting cluster completed.")
-        return 0
-      end
-      # END
-
       def relevant?(server)
         server.killable?
       end
 
-      # Execute every last mf'ing one of em
       def perform_execution(target)
+        ret = true
+
         if config[:cloud]
-          section("Killing Cloud Machines")
-          target.select(&:in_cloud?).destroy
+          section("Deleting Cloud Machines")
+          ret = target.select(&:in_cloud?).destroy
+          die('Deleting VMs of cluster failed. Abort!', DELETE_FAILURE) if !ret
         end
 
         if config[:chef]
-          section("Killing Chef")
-          target.select(&:in_chef? ).delete_chef
+          section("Deleting Chef Nodes")
+          ret = target.select(&:in_chef? ).delete_chef
+          die('Deleting Chef Nodes of cluster failed. Abort!', DELETE_FAILURE) if !ret
         end
+
+        section("Deleting cluster completed.")
+        ret
       end
 
       def display(target, *args, &block)

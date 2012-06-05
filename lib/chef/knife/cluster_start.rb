@@ -40,28 +40,12 @@ class Chef
       end
 
       def perform_execution(target)
-        # BEGIN for-vsphere
-=begin ironfan's code
-        section("Starting machines")
-        super(target)
+        section("Starting cluster #{cluster_name}")
+        ret = target.start(config[:bootstrap])
+        die('Starting cluster failed. Abort!', START_FAILURE) if !ret
+
         section("Announcing Chef nodes as started")
         target.send(:delegate_to_servers, :announce_as_started)
-=end
-        section("Powering on VMs of cluster #{cluster_name}")
-        start_monitor_progess(cluster_name)
-        task = cloud.fog_connection.start_cluster
-        while !task.finished?
-          sleep(monitor_interval)
-          monitor_start_progress(cluster_name, task.get_progress, !config[:bootstrap])
-        end
-        monitor_start_progress(cluster_name, task.get_progress, !config[:bootstrap])
-
-        update_fog_servers(target, task.get_progress.result.servers)
-        display(target)
-
-        if !task.get_result.succeed?
-          die('Powering on VMs of cluster failed. Abort!', 1)
-        end
 
         exit_status = 0
         if config[:bootstrap]
@@ -70,7 +54,6 @@ class Chef
 
         section("Starting cluster completed.")
         return exit_status
-        # END
       end
     end
   end

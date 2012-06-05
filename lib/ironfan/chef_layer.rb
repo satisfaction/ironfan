@@ -104,6 +104,7 @@ module Ironfan
         end
         @chef_client = nil
       end
+      true
     end
 
     # creates or updates the chef node.
@@ -191,28 +192,9 @@ module Ironfan
       end
     end
 
+    # Sync volume attributes. This can be overridden in subclass if needed
     def sync_volume_attributes
       step("    updating volume attributes")
-      case cloud.name
-      when :ec2
-        composite_volumes.each do |vol_name, vol|
-          chef_node.normal[:volumes] ||= Mash.new
-          chef_node.normal[:volumes][vol_name] = vol.to_mash.compact
-        end
-      when :vsphere
-        return if fog_server.nil? or fog_server.volumes.nil? or fog_server.volumes.empty?
-        mount_point_to_device = {}
-        device_to_disk = {}
-        fog_server.volumes.each do |disk|
-          # disk should equal to '/dev/sdb' or 'dev/sdc', etc.
-          device = disk + '1'
-          mount_point = '/mnt/' + device.split('/').last
-          mount_point_to_device[mount_point] = device
-          device_to_disk[device] = disk
-        end
-        @chef_node.normal[:disk][:data_disks]  = mount_point_to_device
-        @chef_node.normal[:disk][:disk_devices] = device_to_disk
-      end
     end
 
     def set_chef_node_attributes

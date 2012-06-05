@@ -13,15 +13,8 @@ module Ironfan
 
     # Error Message
     ERROR_BOOTSTAP_FAIL ||= 'Bootstrapping VM failed.'
+    ERROR_CHEF_NODES_NOT_FOUND ||= "Can't find any Chef Nodes belonging to this cluster. The Chef Nodes may haven't been created or have already been deleted."
 
-
-    # update Ironfan::Server.fog_server with fog_servers returned by CloudManager
-    def update_fog_servers(target, fog_servers)
-      fog_servers.each do |fog_server|
-        server_slice = target.servers.find { |svr| svr.fullname == fog_server.name }
-        server_slice.servers.fog_server = fog_server if server_slice and server_slice.servers
-      end
-    end
 
     def start_monitor_bootstrap(cluster_name)
       Chef::Log.debug("Initialize monitoring bootstrap progress of cluster #{cluster_name}")
@@ -55,7 +48,7 @@ module Ironfan
     end
 
     def monitor_iaas_action_progress(cluster_name, progress, is_last_action = false)
-      if progress.result.servers.empty?
+      if progress.result.servers.empty? || (progress.finished? and !progress.result.succeed?)
         report_refined_progress(cluster_name, progress)
         return
       end
@@ -87,7 +80,7 @@ module Ironfan
       end
 
       if has_progress
-        report_progress(cluster_name, progress.result.error_msg)
+        report_progress(cluster_name)
       else
         Chef::Log.debug("skip reporting cluster status since no progress")
       end
@@ -130,7 +123,13 @@ module Ironfan
     # report progress of deleting cluster to MessageQueue
     def monitor_delete_progress(cluster_name, progress)
       Chef::Log.debug("Begin reporting progress of deleting cluster #{cluster_name}: #{progress.inspect}")
-      monitor_iaas_action_progress(cluster_name, progress, true)
+      if progress.finished?
+        # if not all VMs of the cluster exists in vCenter (e.g. execute 'cluster kill' after 'cluster launch' failed),
+        # monitor_iaas_action_progress() won't work, so call report_refined_progress().
+        report_refined_progress(cluster_name, progress)
+      else
+        monitor_iaas_action_progress(cluster_name, progress, true)
+      end
     end
 
     # report progress of stopping cluster to MessageQueue
@@ -173,7 +172,7 @@ module Ironfan
 
       # merge nodes data with cluster definition
       groups = data['cluster_data']['groups']
-      cluster_meta = JSON.parse(File.read(config[:from_file]))['cluster_definition']
+      cluster_meta = cloud.fog_connection.connection_desc['cluster_definition']
       cluster_meta['groups'].each do |meta_group|
         meta_group['instances'] = groups[meta_group['name']]['instances']
       end
@@ -191,14 +190,14 @@ module Ironfan
       end
       @last_data = data.to_json
 
-      Chef::Log.debug("About to send data to MessageQueue: #{data.pretty_inspect}")
+      Chef::Log.debug("About to send data to MessageQueue: \n#{data.pretty_inspect}")
 
       return if monitor_disabled?
 
       require 'bunny'
 
       # load MessageQueque configuration
-      mq_server = Chef::Config[:knife][:rabbitmq_host] 
+      mq_server = Chef::Config[:knife][:rabbitmq_host]
       mq_exchange_id = Chef::Config[:knife][:rabbitmq_exchange]
       mq_channel_id = Chef::Config[:knife][:rabbitmq_channel]
 
@@ -230,13 +229,21 @@ module Ironfan
     end
 
     def cluster_nodes(cluster_name)
+      # the Chef Search API has some latency to return the newly created Chef Nodes, so we need to wait
+      timeout = 180 # 60 * 3 seconds
+      sleep_interval = 3 # 3 seconds
+
       nodes = []
       while nodes.empty?
         Chef::Search::Query.new.search(:node, "cluster_name:#{cluster_name}") do |n|
           nodes.push(n)
         end
-        Chef::Log.debug("nodes in cluster #{cluster_name} returned by Chef Search are : #{nodes}")
-        sleep(3)
+        Chef::Log.debug("Chef Nodes for cluster #{cluster_name} returned by Chef Search are : #{nodes}")
+
+        timeout -= sleep_interval
+        raise ERROR_CHEF_NODES_NOT_FOUND if timeout < 0
+
+        sleep(sleep_interval)
       end
       nodes.sort_by! { |n| n.name }
     end
@@ -273,7 +280,7 @@ module Ironfan
       cluster[:progress] /= cluster[:total] if cluster[:total] != 0
       cluster[:finished] = (cluster[:running] == 0)
       cluster[:succeed] = (cluster[:success] == cluster[:total])
-      cluster[:error_msg] = error_msg unless cluster[:succeed]
+      cluster[:error_msg] = error_msg if cluster[:finished] and !cluster[:succeed]
 
       JSON.parse(cluster.to_json) # convert keys from symbol to string
     end

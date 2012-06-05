@@ -1,3 +1,6 @@
+require 'ironfan/ec2/cloud'
+require 'ironfan/vsphere/cloud'
+
 module Ironfan
   #
   # Base class allowing us to layer settings for facet over cluster
@@ -40,9 +43,9 @@ module Ironfan
       return @cloud if @cloud or cloud_provider.nil?
       case cloud_provider
         when :ec2
-          @cloud ||= Ironfan::Cloud::Ec2.new(self)
+          @cloud ||= Ironfan::Ec2::Cloud.new(self)
         when :vsphere
-          @cloud ||= Ironfan::Cloud::Vsphere.new(self)
+          @cloud ||= Ironfan::Vsphere::Cloud.new(self)
         else
           raise "Unknown cloud provider #{cloud_provider.inspect}. Only supports :ec2 and :vsphere so far."
       end
@@ -51,8 +54,8 @@ module Ironfan
       @cloud
     end
 
+    # An abstract method for doing some tasks after the Cloud object is created
     def after_cloud_created(attrs)
-      nil
     end
 
     # sugar for cloud(:vsphere)

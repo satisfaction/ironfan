@@ -17,83 +17,15 @@ Gem::Specification.new do |s|
     "README.md",
     "README.textile"
   ]
-  s.files = [
-    ".gitignore",
-    ".rspec",
-    ".yardopts",
-    "CHANGELOG.md",
-    "Gemfile",
-    "Guardfile",
-    "LICENSE.md",
-    "README.md",
-    "README.textile",
-    "Rakefile",
-    "TODO.md",
-    "VERSION",
-    "chefignore",
-    "config/client.rb",
-    "config/proxy.pac",
-    "config/ubuntu10.04-ironfan.erb",
-    "config/ubuntu11.10-ironfan.erb",
-    "ironfan.gemspec",
-    "lib/chef/knife/bootstrap/centos5-vmware.erb",
-    "lib/chef/knife/bootstrap/ubuntu10.04-ironfan.erb",
-    "lib/chef/knife/bootstrap/ubuntu11.10-ironfan.erb",
-    "lib/chef/knife/cluster_bootstrap.rb",
-    "lib/chef/knife/cluster_create.rb",
-    "lib/chef/knife/cluster_kick.rb",
-    "lib/chef/knife/cluster_kill.rb",
-    "lib/chef/knife/cluster_launch.rb",
-    "lib/chef/knife/cluster_list.rb",
-    "lib/chef/knife/cluster_proxy.rb",
-    "lib/chef/knife/cluster_show.rb",
-    "lib/chef/knife/cluster_ssh.rb",
-    "lib/chef/knife/cluster_start.rb",
-    "lib/chef/knife/cluster_stop.rb",
-    "lib/chef/knife/cluster_sync.rb",
-    "lib/chef/knife/cluster_vagrant.rb",
-    "lib/chef/knife/ironfan_knife_common.rb",
-    "lib/chef/knife/ironfan_monitor.rb",
-    "lib/chef/knife/ironfan_script.rb",
-    "lib/chef/knife/vagrant/ironfan_environment.rb",
-    "lib/chef/knife/vagrant/ironfan_provisioners.rb",
-    "lib/chef/knife/vagrant/skeleton_vagrantfile.rb",
-    "lib/ironfan.rb",
-    "lib/ironfan/chef_layer.rb",
-    "lib/ironfan/cloud.rb",
-    "lib/ironfan/cluster.rb",
-    "lib/ironfan/compute.rb",
-    "lib/ironfan/deprecated.rb",
-    "lib/ironfan/discovery.rb",
-    "lib/ironfan/dsl_object.rb",
-    "lib/ironfan/facet.rb",
-    "lib/ironfan/fog_layer.rb",
-    "lib/ironfan/iaas_layer.rb",
-    "lib/ironfan/private_key.rb",
-    "lib/ironfan/role_implications.rb",
-    "lib/ironfan/security_group.rb",
-    "lib/ironfan/server.rb",
-    "lib/ironfan/server_slice.rb",
-    "lib/ironfan/volume.rb",
-    "spec/data/cluster_definition.json",
-    "spec/data/clusters/webserver_demo.rb",
-    "spec/ironfan/cluster_create_spec.rb",
-    "spec/ironfan/cluster_spec.rb",
-    "spec/ironfan/facet_spec.rb",
-    "spec/ironfan/server_slice_spec.rb",
-    "spec/ironfan/server_spec.rb",
-    "spec/ironfan_spec.rb",
-    "spec/spec_helper.rb",
-    "spec/spec_helper/dummy_chef.rb",
-    "spec/test_config.rb",
-    "tasks/chef_config.rake"
-  ]
+
   s.homepage = "http://infochimps.com/labs"
   s.licenses = ["apachev2"]
   s.require_paths = ["lib"]
   s.rubygems_version = "1.8.15"
   s.summary = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
-  s.test_files = ["spec/data/cluster_definition.json", "spec/data/clusters/webserver_demo.rb", "spec/test_config.rb", "spec/ironfan/facet_spec.rb", "spec/ironfan/cluster_spec.rb", "spec/ironfan/server_slice_spec.rb", "spec/ironfan/server_spec.rb", "spec/ironfan/cluster_create_spec.rb", "spec/ironfan_spec.rb", "spec/spec_helper/dummy_chef.rb", "spec/spec_helper.rb"]
+
+  s.files = `git ls-files`.split("\n")
+  s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
