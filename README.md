@@ -13,6 +13,8 @@ This fork of Ironfan (VMware Serengeti Ironfan) is part of VMware Serengeti Open
 
 ## Support for Multi Cloud Providers
 
+Currently VMware Serengeti Ironfan supports two kinds of cloud providers: vSphere and EC2.
+
 ### vSphere Cloud
 
 vSphere Cloud Provider uses a RubyGem cloud-manager (created by VMware Serengeti project) instead of RubyGem Fog (used by EC2 Cloud Provider) to talk to vSphere vCenter server.
