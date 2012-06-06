@@ -15,14 +15,13 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = [
     "LICENSE.md",
     "README.md",
-    "README.textile"
   ]
 
   s.homepage = "http://infochimps.com/labs"
   s.licenses = ["apachev2"]
   s.require_paths = ["lib"]
   s.rubygems_version = "1.8.15"
-  s.summary = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
+  s.summary = "Ironfan allows you to orchestrate not just systems but clusters of machines." 
 
   s.files = `git ls-files`.split("\n")
   s.test_files = `git ls-files -- {spec,tests}/*`.split("\n")
