@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions copyright © 2012 VMware, Inc. All rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

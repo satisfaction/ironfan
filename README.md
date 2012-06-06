@@ -1,42 +1,59 @@
-# Ironfan Core: Knife Tools and Core Models
+# VMware Serengeti Ironfan
 
-Ironfan, the foundation of The Infochimps Platform, is an expressive toolset for constructing scalable, resilient architectures. It works in the cloud, in the data center, and on your laptop, and it makes your system diagram visible and inevitable. Inevitable systems coordinate automatically to interconnect, removing the hassle of manual configuration of connection points (and the associated danger of human error).
-For more information about Ironfan and the Infochimps Platform, visit [infochimps.com](http://www.infochimps.com/).
+This is a fork of Ironfan project (created by Infochimps) to enable Ironfan work with VMware vSphere 5.0.
 
-This repo implements:
+This fork of Ironfan (VMware Serengeti Ironfan) is part of VMware Serengeti Open Source project, it will be called by VMware Serengeti Server component. However, this Ironfan fork can also work standalone, please read section 'Create a vSphere cluster'.
 
-* Core models to describe your system diagram with a clean, expressive domain-specific language
-* Knife plugins to orchestrate clusters of machines using simple commands like `knife cluster launch`
-* Logic to coordinate truth among chef server and cloud providers
+## Major changes in VMware Serengeti Ironfan
 
-## Getting Started
+* Refactor Ironfan code architecture to support multi cloud providers gracefully.
+* Add full support for vSphere Cloud (i.e. create and manage VMs in VMware vCenter server).
+* Add monitor function to Ironfan to enable Ironfan report progress of cluster operation and bootstrap to a RabbitMQ server.
+* Provide a set of cookbooks for deploying a hadoop cluster in a vSphere Cloud.
 
-To jump right into using Ironfan, follow our [Installation Instructions](https://github.com/infochimps-labs/ironfan/wiki/INSTALL). For an explanatory tour, check out our [Web Walkthrough](https://github.com/infochimps-labs/ironfan/wiki/walkthrough-web).  Please file all issues on [Ironfan issues](https://github.com/infochimps-labs/ironfan/issues).
+## Support for Multi Cloud Providers
 
-### Tools
+### vSphere Cloud
 
-Ironfan consists of the following Toolset:
+vSphere Cloud Provider uses a RubyGem cloud-manager (created by VMware Serengeti project) instead of RubyGem Fog (used by EC2 Cloud Provider) to talk to vSphere vCenter server.
+RubyGem cloud-manager provides the function for IaaS like cluster management, and it uses an enhanced RubyGem Fog (created by VMware Serengeti project) to talk to vSphere vCenter server.
 
-* [ironfan-homebase](https://github.com/infochimps-labs/ironfan-homebase): centralizes the cookbooks, roles and clusters. A solid foundation for any chef user.
-* [ironfan gem](https://github.com/infochimps-labs/ironfan):
-  - core models to describe your system diagram with a clean, expressive domain-specific language
-  - knife plugins to orchestrate clusters of machines using simple commands like `knife cluster launch`
-  - logic to coordinate truth among chef server and cloud providers.
-* [ironfan-pantry](https://github.com/infochimps-labs/ironfan-pantry): Our collection of industrial-strength, cloud-ready recipes for Hadoop, HBase, Cassandra, Elasticsearch, Zabbix and more.
-* [silverware cookbook](https://github.com/infochimps-labs/ironfan-homebase/tree/master/cookbooks/silverware): coordinate discovery of services ("list all the machines for `awesome_webapp`, that I might load balance them") and aspects ("list all components that write logs, that I might logrotate them, or that I might monitor the free space on their volumes".
+#### Knife commands for manage a vSphere cluster
 
-### Documentation
+You can use the following Ironfan Knife commands to manage a vSphere cluster:
+* knife cluster create ... --bootstrap
+* knife cluster launch ... --bootstrap
+* knife cluster bootstrap ...
+* knife cluster show ...
+* knife cluster stop ...
+* knife cluster start ... --bootstrap
+* knife cluster delete ...
 
-* [Index of wiki pages](https://github.com/infochimps-labs/ironfan/wiki/_pages)
-* [Ironfan wiki](https://github.com/infochimps-labs/ironfan/wiki): high-level documentation
-* [Ironfan issues](https://github.com/infochimps-labs/ironfan/issues): bugs, questions and feature requests for *any* part of the ironfan toolset.
-* [Ironfan gem docs](http://rdoc.info/gems/ironfan): rdoc docs for Ironfan
-* [Ironfan Screencast](http://bit.ly/ironfan-hadoop-in-20-minutes) -- build a Hadoop cluster from scratch in 20 minutes.
-* Ironfan powers the [Infochimps Platform](http://www.infochimps.com/how-it-works), our scalable enterprise big data platform. Ironfan Enterprise adds zero-configuration logging, monitoring and a compelling UI.
+One outstanding change to all these commands (only when executed on a vSphere cluster) requires an additional param '-f /path/to/cluster_definition.json'.
+This param specifies a json file containing the cluster definition and RabbitMQ server configuration (used by Ironfan), and configuration for connecting to vCenter (used by cloud-manager).
+Take spec/data/cluster_definition.json as an example of the cluster defintion file.
 
-### The Ironfan Way
+#### Create a vSphere cluster
 
-* [Core Concepts](https://github.com/infochimps-labs/ironfan/wiki/core_concepts)     -- Components, Announcements, Amenities and more.
-* [Philosophy](https://github.com/infochimps-labs/ironfan/wiki/Philosophy)            -- Best practices and lessons learned
-* [Style Guide](https://github.com/infochimps-labs/ironfan/wiki/style_guide)         -- Common attribute names, how and when to include other cookbooks, and more
-* [Homebase Layout](https://github.com/infochimps-labs/ironfan/wiki/homebase-layout) -- How this homebase is organized, and why
+Assume you've setup a Hosted Chef Server or Open Source Chef Server and have a configured .chef/knife.rb .
+1. Copy spec/data/cluster_definition.json to ~/hadoopcluster.json
+2. Open ~/hadoopdemo_cluster.json, modify the cluster definition and vCenter connection configuration
+3. Append "knife[:monitor_disabled] = true" to .chef/knife.rb to disable the Ironfan monitor function.
+4. Execute cluster create command:  knife cluster create hadoopcluster -f ~/hadoopcluster.json --yes --bootstrap
+5. After the cluster is created, you can use other Knife commands to manage it.
+
+### EC2 Cloud
+
+Original Infochimps Ironfan mainly supports EC2 cloud. This fork of Ironfan still provide support for EC2 cloud the same as the Infochimps Ironfan does. The only change is we must specify the cloud provider in cluster definition file, e.g. in ironfan-homebase/clusters/hadoopdemo.rb, change "Ironfan.cluster 'hadoopdemo' do" to "Ironfan.cluster :ec2, 'hadoopdemo' do" .
+
+Please be noted that we have been focusing on vSphere support, and haven't done full test for the EC2 support.
+
+### Support more Cloud Providers
+
+Each cloud provider has a seperate folder to contain the necessary model classes: Cloud, Cluster, Facet, Server, ServerSlice.
+For example, cloud provider for vSphere has a folder (lib/ironfan/vsphere) which contains 5 files, and each file defines a model class for vSphere cloud.
+If you want to add a new cloud provider, create a folder and the model classes for it, override necessary methods defined in the base model classes. Please take vSphere cloud provider as an example when writing new cloud provider.
+
+# Original Ironfan Created by Infochimps
+
+Thanks very much to the original open source Ironfan project created by Infochimps (https://github.com/infochimps-labs/ironfan)

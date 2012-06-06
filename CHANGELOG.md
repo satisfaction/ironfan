@@ -1,7 +1,8 @@
-# 3.1.4.serengeti.1: Make Ironfan work against vSphere 5.0 in addition to EC2
+# 3.1.4.serengeti.1: Refactor Ironfan to work with VMware vSphere 5.0 in addition to EC2
 
-* Refactor Ironfan code architecture to support multi cloud providers gracefully
-* Add full support for VMware vSphere cloud
+* Refactor Ironfan code architecture to support multi cloud providers gracefully.
+* Add full support for vSphere Cloud (i.e. create and manage VMs in VMware vCenter server).
+* Add monitor function to Ironfan to enable Ironfan report progress of cluster operation and bootstrap to a RabbitMQ server.
 
 # v3.1.4: The inevitable post-launch tweaks
 
