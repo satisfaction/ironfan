@@ -1,4 +1,4 @@
-Ironfan.cluster 'webserver_demo' do
+Ironfan.cluster :ec2, 'webserver_demo' do
   cloud do
     backing             "instance"
     image_name          "maverick"
