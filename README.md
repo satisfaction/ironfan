@@ -23,13 +23,13 @@ RubyGem cloud-manager provides the function for IaaS like cluster management, an
 #### Knife commands for manage a vSphere cluster
 
 You can use the following Ironfan Knife commands to manage a vSphere cluster:
-* knife cluster create ... --bootstrap
-* knife cluster launch ... --bootstrap
-* knife cluster bootstrap ...
-* knife cluster show ...
-* knife cluster stop ...
-* knife cluster start ... --bootstrap
-* knife cluster delete ...
+* knife cluster create cluster_name --yes --bootstrap
+* knife cluster launch cluster_name --yes --bootstrap
+* knife cluster show   cluster_name --yes
+* knife cluster stop   cluster_name --yes
+* knife cluster start  cluster_name --yes --bootstrap
+* knife cluster kill   cluster_name --yes
+* knife cluster bootstrap cluster_name --yes
 
 One outstanding change to all these commands (only when executed on a vSphere cluster) requires an additional param '-f /path/to/cluster_definition.json'.
 This param specifies a json file containing the cluster definition and RabbitMQ server configuration (used by Ironfan), and configuration for connecting to vCenter (used by cloud-manager).
@@ -39,10 +39,15 @@ Take spec/data/cluster_definition.json as an example of the cluster defintion fi
 
 Assume you've setup a Hosted Chef Server or Open Source Chef Server and have a configured .chef/knife.rb .
 1. Copy spec/data/cluster_definition.json to ~/hadoopcluster.json
-2. Open ~/hadoopdemo_cluster.json, modify the cluster definition and vCenter connection configuration
+2. Open ~/hadoopcluster.json, modify the cluster definition:
+     change "name", "template_id", "distro_map", "port_group" in section "cluster_definition",
+     change vCenter connection configuration in section "cloud_provider", and
+     don't need to change section "system_properties".
 3. Append "knife[:monitor_disabled] = true" to .chef/knife.rb to disable the Ironfan monitor function.
-4. Execute cluster create command:  knife cluster create hadoopcluster -f ~/hadoopcluster.json --yes --bootstrap
-5. After the cluster is created, you can use other Knife commands to manage it.
+4. Execute cluster create command:  knife cluster create hadoopcluster -f ~/hadoopcluster.json --yes --bootstrap [-V]
+   This command will create VMs in vCenter for this Hadoop cluster and install specified Hadoop packages on the VMs.
+5. After the cluster is created successfully, navigate to http://ip_of_hadoopcluster-master-0:50070/ to see the status of the Hadoop cluster.
+6. Then, you can use other Knife commands to manage the cluster (e.g. show, bootstrap, stop, start, kill etc.).
 
 ### EC2 Cloud
 
@@ -59,3 +64,7 @@ If you want to add a new cloud provider, create a folder and the model classes f
 # Original Ironfan Created by Infochimps
 
 Thanks very much to the original open source Ironfan project created by Infochimps (https://github.com/infochimps-labs/ironfan)
+
+# Contact
+
+Please email us if you have any questions.
