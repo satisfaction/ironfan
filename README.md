@@ -38,6 +38,7 @@ Take spec/data/cluster_definition.json as an example of the cluster defintion fi
 #### Create a vSphere cluster
 
 Assume you've setup a Hosted Chef Server or Open Source Chef Server and have a configured .chef/knife.rb .
+<pre>
 1. Copy spec/data/cluster_definition.json to ~/hadoopcluster.json
 2. Open ~/hadoopcluster.json, modify the cluster definition:
      change "name", "template_id", "distro_map", "port_group" in section "cluster_definition",
@@ -48,6 +49,7 @@ Assume you've setup a Hosted Chef Server or Open Source Chef Server and have a c
    This command will create VMs in vCenter for this Hadoop cluster and install specified Hadoop packages on the VMs.
 5. After the cluster is created successfully, navigate to http://ip_of_hadoopcluster-master-0:50070/ to see the status of the Hadoop cluster.
 6. Then, you can use other Knife commands to manage the cluster (e.g. show, bootstrap, stop, start, kill etc.).
+</pre>
 
 ### EC2 Cloud
 
@@ -67,4 +69,5 @@ Thanks very much to the original open source Ironfan project created by Infochim
 
 # Contact
 
-Please email us if you have any questions.
+Please send email to our mailing lists for [developers](https://groups.google.com/group/serengeti-dev) or for [users](https://groups.google.com/group/serengeti-user) if you have any questions.
+
