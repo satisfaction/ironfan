@@ -70,7 +70,7 @@ module Ironfan
   # Defines a cluster with the given name.
   #
   # @example
-  #   Ironfan.cluster :ec2, 'demosimple' do
+  #   Ironfan.cluster 'demosimple', :provider => :ec2 do
   #     cloud :ec2 do
   #       availability_zones  ['us-east-1d']
   #       flavor              "t1.micro"
@@ -86,7 +86,8 @@ module Ironfan
   #   end
   #
   #
-  def self.cluster(provider, name, attrs = {}, &block)
+  def self.cluster(name, attrs = {:provider => :ec2}, &block)
+    provider = attrs[:provider]
     cl = ( self.clusters[name] ||= self.new_cluster(provider, name, attrs) )
     cl.configure(&block)
     cl
