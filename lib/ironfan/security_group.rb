@@ -43,6 +43,7 @@ module Ironfan
         else
           groups_list = Ironfan.fog_connection.security_groups.all
         end
+
         @@all = groups_list.inject(Mash.new) do |hsh, fog_group|
           # AWS security_groups are strangely case sensitive, allowing upper-case but colliding regardless
           #  of the case. This forces all names to lowercase, and matches against that below.
@@ -52,16 +53,16 @@ module Ironfan
       end
 
       def get
-        all[name] || Ironfan.fog_connection.security_groups.get(name)
+        all[name] || cloud.fog_connection.security_groups.get(name)
       end
 
       def self.get_or_create(group_name, description)
         group_name = group_name.to_s.downcase
-        # FIXME: the '|| Ironfan.fog' part is probably unnecessary
-        fog_group = all[group_name] || Ironfan.fog_connection.security_groups.get(group_name)
+        # FIXME: the '|| cloud.fog' part is probably unnecessary
+        fog_group = all[group_name] || cloud.fog_connection.security_groups.get(group_name)
         unless fog_group
           self.step(group_name, "creating (#{description})", :green)
-          fog_group = all[group_name] = Ironfan.fog_connection.security_groups.new(:name => group_name, :description => description, :connection => Ironfan.fog_connection, :vpc_id => @@vpc)
+          fog_group = all[group_name] = cloud.fog_connection.security_groups.new(:name => group_name, :description => description, :connection => cloud.fog_connection, :vpc_id => @@vpc)
           fog_group.save
         end
         fog_group

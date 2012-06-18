@@ -131,7 +131,7 @@ module Ironfan
       :sub_volumes,     # volumes that comprise this raid group
       :level,           # RAID level (http://en.wikipedia.org/wiki/RAID#Standard_levels)
       :chunk,           # Raid chunk size (https://raid.wiki.kernel.org/articles/r/a/i/RAID_setup_cbb2.html)
-      :read_ahead,      # read-ahead buffer
+      :read_ahead       # read-ahead buffer
       )
 
     def desc

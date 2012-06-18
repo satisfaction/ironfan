@@ -1,3 +1,18 @@
+#
+#   Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
 module Ironfan
 
   #
@@ -65,15 +80,15 @@ module Ironfan
     end
 
     def created?
-      in_cloud? && (not ['terminated', 'shutting-down'].include?(fog_server.state))
+      in_cloud?
     end
 
     def running?
-      has_cloud_state?('running')
+      raise_not_implemented
     end
 
     def startable?
-      has_cloud_state?('stopped')
+      raise_not_implemented
     end
 
     def launchable?
@@ -121,10 +136,15 @@ module Ironfan
       reverse_merge!(facet)
       reverse_merge!(cluster)
       @settings[:run_list] = combined_run_list
-      #
-      cloud.reverse_merge!(facet.cloud)
-      cloud.reverse_merge!(cluster.cloud)
-      #
+
+      # create cloud provider
+      cloud_name = cluster.cloud.name if cluster.cloud
+      cloud_name = facet.cloud.name if facet.cloud
+      cloud(cloud_name)
+      # merge cloud settings
+      cloud.reverse_merge!(facet.cloud) if facet.cloud
+      cloud.reverse_merge!(cluster.cloud) if cluster.cloud
+
       cloud.user_data({
           :chef_server            => chef_server_url,
           :validation_client_name => validation_client_name,
@@ -186,42 +206,10 @@ module Ironfan
     end
 
     #
-    # This prepares a composited view of the volumes -- it shows the cluster
-    # definition overlaid by the facet definition overlaid by the server
-    # definition.
-    #
-    # This method *does* auto-vivify an empty volume declaration on the server,
-    # but doesn't modify it.
-    #
-    # This code is pretty smelly, but so is the resolve! behavior. advice welcome.
-    #
-    def composite_volumes
-      vols = {}
-      facet.volumes.each do |vol_name, vol|
-        self.volumes[vol_name] ||= Ironfan::Volume.new(:parent => self, :name => vol_name)
-        vols[vol_name]         ||= self.volumes[vol_name].dup
-        vols[vol_name].reverse_merge!(vol)
-      end
-      cluster.volumes.each do |vol_name, vol|
-        self.volumes[vol_name] ||= Ironfan::Volume.new(:parent => self, :name => vol_name)
-        vols[vol_name]         ||= self.volumes[vol_name].dup
-        vols[vol_name].reverse_merge!(vol)
-      end
-      vols.each{|vol_name, vol| vol.availability_zone self.default_availability_zone }
-      vols
-    end
-
-    # FIXME -- this will break on some edge case wehre a bogus node is
-    # discovered after everything is resolve!d
-    def default_availability_zone
-      cloud.default_availability_zone
-    end
-
-    #
-    # retrieval
+    # Find a Server by cluster_name, facet_name, facet_index
     #
     def self.get(cluster_name, facet_name, facet_index)
-      cluster = Ironfan.cluster(cluster_name)
+      cluster = Ironfan.load_cluster(cluster_name)
       had_facet = cluster.has_facet?(facet_name)
       facet = cluster.facet(facet_name)
       facet.bogosity true unless had_facet
@@ -231,21 +219,25 @@ module Ironfan
       return server
     end
 
+    #
+    # Find a Server by full name
+    #
+    def self.get_by_name(node_name)
+      ( cluster_name, facet_name, facet_index ) = node_name.split(/-/)
+      self.get(cluster_name, facet_name, facet_index)
+    end
+
     def self.all
       @@all
     end
 
     #
-    # Actions!
+    # Actions methods which should be overridden in subclass if needed
     #
 
     def sync_to_cloud
       step "Syncing to cloud"
-      attach_volumes
-      create_tags
-      associate_public_ip
-      ensure_placement_group
-      set_instance_attributes
+      raise_not_implemented
     end
 
     def sync_to_chef
@@ -254,27 +246,9 @@ module Ironfan
       true
     end
 
-    # FIXME: a lot of AWS logic in here. This probably lives in the facet.cloud
-    # but for the one or two things that come from the facet
+    # Create a VM in the cloud if it does not already exist
     def create_server
-      return nil if created? # only create a server if it does not already exist
-      fog_create_server
-    end
-
-    def create_tags
-      return unless created?
-      step("  labeling servers and volumes")
-      fog_create_tags(fog_server, self.fullname, tags)
-      composite_volumes.each do |vol_name, vol|
-        if vol.fog_volume
-          fog_create_tags(vol.fog_volume, vol.desc,
-            { "server" => self.fullname, "name" => "#{name}-#{vol.name}", "device" => vol.device, "mount_point" => vol.mount_point, "cluster" => cluster_name, "facet"   => facet_name, "index"   => facet_index, })
-        end
-      end
-    end
-
-    def block_device_mapping
-      composite_volumes.values.map(&:block_device_mapping).compact
+      raise_not_implemented
     end
 
     # ugh. non-dry below.

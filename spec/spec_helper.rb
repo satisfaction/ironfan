@@ -33,7 +33,7 @@ Spork.prefork do # This code is run only once when the spork server is started
   Dir[IRONFAN_DIR("spec/spec_helper/*.rb")].each {|f| require f}
 
   def load_example_cluster(name)
-    require(IRONFAN_DIR('clusters', "#{name}.rb"))
+    require(IRONFAN_DIR('spec/data/clusters', "#{name}.rb"))
   end
   def get_example_cluster name
     load_example_cluster(name)

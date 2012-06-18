@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +17,45 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_script',       File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_script',       File.dirname(__FILE__))
 
 class Chef
   class Knife
     class ClusterStart < Ironfan::Script
       import_banner_and_options(Ironfan::Script)
 
+      deps do
+        require 'time'
+        require 'socket'
+        Chef::Knife::ClusterBootstrap.load_deps
+      end
+
+      option :bootstrap,
+        :long        => "--[no-]bootstrap",
+        :description => "Also bootstrap the launched node (default is NOT to bootstrap)",
+        :boolean     => true,
+        :default     => false
+
       def relevant?(server)
         server.startable?
       end
 
       def perform_execution(target)
-        section("Starting machines")
-        super(target)
+        section("Starting cluster #{cluster_name}")
+        ret = target.start(config[:bootstrap])
+        die('Starting cluster failed. Abort!', START_FAILURE) if !ret
+
         section("Announcing Chef nodes as started")
         target.send(:delegate_to_servers, :announce_as_started)
-      end
 
+        exit_status = 0
+        if config[:bootstrap]
+          exit_status = bootstrap_cluster(cluster_name, target)
+        end
+
+        section("Starting cluster completed.")
+        return exit_status
+      end
     end
   end
 end

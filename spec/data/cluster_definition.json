@@ -1,0 +1,80 @@
+{
+  "cluster_definition": {
+    "name": "hadoop_cluster_test",
+    "template_id": "the_vm_template_id",
+    "distro": "apache",
+    "distro_map": {
+       "hadoop": "http://localhost/distros/apache/hadoop.tar.gz",
+       "pig": "http://localhost/distros/apache/pig.tar.gz",
+       "hive": "http://localhost/distros/apache/hive.tar.gz"
+    },
+    "groups": [
+      {
+        "name": "master",
+        "roles": ["hadoop_namenode", "hadoop_jobtracker"],
+        "instance_num": 1,
+        "cpu": 2, // CPU core number
+        "memory": 2048, // 2048M
+        "networking": {
+          "port_group": "VM Network"
+        },
+        "storage": {
+          "type": "shared",
+          "size": 10 // 10G
+        }
+      },
+      {
+        "name": "worker",
+        "roles": ["hadoop_datanode", "hadoop_tasktracker"],
+        "instance_num": 3,
+        "cpu": 2,
+        "memory": 2048,
+        "networking": {
+          "port_group": "VM Network"
+        },
+        "storage": {
+          "type": "local",
+          "size": 50
+        }
+      },
+      {
+        "name": "client",
+        "roles": ["hadoop_client", "hive", "pig"],
+        "instance_num": 1,
+        "cpu": 1,
+        "memory": 1024,
+        "networking": {
+          "port_group": "VM Network"
+        },
+        "storage": {
+          "type": "shared",
+          "size": 20
+        }
+      }
+    ]
+  },
+  "cloud_provider": {
+    "name": "vsphere",
+    "vc_addr": "vc_server_ip",
+    "vc_user": "administrator",
+    "vc_pwd": "the_password",
+    "vc_datacenter": "the_datacenter_name",
+    "vc_clusters": [
+      {
+        "name": "cluster-ironfan",
+        "vc_rps": ["IronfanRP"]
+      }
+    ],
+    "vc_shared_datastore_pattern": [ "ds-shared*" ],
+    "vc_local_datastore_pattern": [ "ds-local*" ],
+    "cloud_adapter": "fog"
+  },
+  "system_properties": {
+    "rabbitmq_host": "localhost",
+    "rabbitmq_port": 5672,
+    "rabbitmq_username": "",
+    "rabbitmq_password": "",
+    "rabbitmq_exchange": "bddtask",
+    "rabbitmq_channel": "task.1"
+  }
+}

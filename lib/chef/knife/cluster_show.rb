@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +17,12 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_knife_common', File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_knife_common', File.dirname(__FILE__))
 
 class Chef
   class Knife
-    class ClusterShow < Knife
-      include Ironfan::KnifeCommon
-      deps do
-        Ironfan::KnifeCommon.load_deps
-      end
+    class ClusterShow < Ironfan::Script
+      import_banner_and_options(Ironfan::Script)
 
       banner "knife cluster show        CLUSTER[-FACET[-INDEXES]] (options) - a helpful display of cluster's cloud and chef state"
 
@@ -49,13 +47,11 @@ class Chef
           target.each do |svr|
             Chef::Log.debug( "Server #{svr.name}: #{JSON.pretty_generate(svr.to_hash)}" )
             Chef::Log.debug( "- cloud: #{JSON.pretty_generate(svr.cloud.to_hash)}" )
-            Chef::Log.debug( "- fog:   #{JSON.pretty_generate(svr.fog_launch_description)}" )
           end
         end
 
         # Display same
         display(target)
-
       end
     end
   end

@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_script', File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_script', File.dirname(__FILE__))
 require 'chef/knife/bootstrap'
 
 class Chef
@@ -27,6 +28,10 @@ class Chef
         :long        => "--ssh-user USERNAME",
         :short       => "-x USERNAME",
         :description => "The ssh username"
+      option :ssh_password,
+        :short => "-P PASSWORD",
+        :long => "--ssh-password PASSWORD",
+        :description => "The ssh password"
       option :bootstrap_runs_chef_client,
         :long        => "--[no-]bootstrap-runs-chef-client",
         :description => "If bootstrap is invoked, the bootstrap script causes an initial run of chef-client (default true).",
@@ -60,7 +65,7 @@ class Chef
 
       def perform_execution(target)
         # Execute across all servers in parallel
-        threads = target.servers.map{ |server| Thread.new(server) { |svr| run_bootstrap(svr, svr.public_hostname) } }
+        threads = target.servers.map{ |server| Thread.new(server) { |svr| run_bootstrap(svr, svr.fog_server.ipaddress) } }
         # Wait for the threads to finish and return the array of thread's exit value
         threads.map{ |t| t.join.value }
       end

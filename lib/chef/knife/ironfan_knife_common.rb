@@ -1,7 +1,31 @@
+#
+#   Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
 require 'chef/knife'
 
 module Ironfan
   module KnifeCommon
+
+    # Exit Status of Knife commands
+    SUCCESS ||= 0
+    FAILURE ||= 1
+    CREATE_FAILURE ||= 2
+    BOOTSTRAP_FAILURE ||= 3
+    DELETE_FAILURE ||= 4
+    STOP_FAILURE ||= 5
+    START_FAILURE ||= 6
 
     def self.load_deps
       require 'formatador'
@@ -13,10 +37,86 @@ module Ironfan
     def load_ironfan
       $LOAD_PATH << File.join(Chef::Config[:ironfan_path], '/lib') if Chef::Config[:ironfan_path]
       require 'ironfan'
+      require 'ironfan/monitor'
+      extend Ironfan::Monitor
+
       $stdout.sync = true
       Ironfan.ui          = self.ui
       self.config[:cloud] = Chef::Config[:cloud] if Chef::Config.has_key?(:cloud)
       Ironfan.chef_config = self.config
+
+      Chef::Log::Formatter.show_time = true # initialize logger
+
+      initialize_ironfan_broker(config[:from_file]) if config[:from_file] # for :vsphere cloud
+    end
+
+    def initialize_ironfan_broker(config_file)
+      require 'ironfan/iaas_layer'
+
+      initialize_iaas_provider(config_file)
+      save_distro_info(config_file)
+      save_message_queue_server_info(config_file)
+    end
+
+    def initialize_iaas_provider(filename)
+      Ironfan::IaasProvider.init(JSON.parse(File.read(filename))) # initialize IaasProvider
+    end
+
+    def save_distro_info(filename)
+      Chef::Log.debug("Loading hadoop distro info")
+      begin
+        cluster_def = JSON.parse(File.read(filename))['cluster_definition']
+        distro_name = cluster_def['distro']
+        distro_repo = cluster_def['distro_map']
+        distro_repo['id'] = distro_name
+      rescue StandardError => e
+        raise e, "Malformed hadoop distro info in cluster definition file."
+      end
+
+      Chef::Log.debug("Saving hadoop distro info to Chef Data Bag: #{distro_repo}")
+      data_bag_name = "hadoop_distros"
+      databag = Chef::DataBag.load(data_bag_name) rescue databag = nil
+      if databag.nil?
+        databag = Chef::DataBag.new
+        databag.name(data_bag_name)
+        databag.save
+      end
+      databag_item = Chef::DataBagItem.load(distro_name) rescue databag_item = nil
+      databag_item ||= Chef::DataBagItem.new
+      databag_item.data_bag(data_bag_name)
+      databag_item.raw_data = distro_repo
+      databag_item.save
+    end
+
+    def save_message_queue_server_info(filename)
+      Chef::Log.debug("Loading hadoop message queue server info")
+      begin
+        message_queue_server_info = JSON.parse(File.read(filename))['system_properties']
+        Chef::Config[:knife][:rabbitmq_host] = message_queue_server_info['rabbitmq_host']
+        Chef::Config[:knife][:rabbitmq_port] = message_queue_server_info['rabbitmq_port']
+        Chef::Config[:knife][:rabbitmq_username] = message_queue_server_info['rabbitmq_username']
+        Chef::Config[:knife][:rabbitmq_password] = message_queue_server_info['rabbitmq_password']
+        Chef::Config[:knife][:rabbitmq_exchange] = message_queue_server_info['rabbitmq_exchange']
+        Chef::Config[:knife][:rabbitmq_channel] = message_queue_server_info['rabbitmq_channel']
+      rescue StandardError => e
+        raise e, "Malformed hadoop message queue server info in cluster definition file."
+      end
+    end
+
+    def cluster_name
+      if @name_args.length > 0
+        return @name_args[0] # when @name_args is [clustername facet index]
+      else
+        return @name_args[0].split('-')[0] # when @name_args is [clustername-facet-index]
+      end
+    end
+
+    def cluster
+      @cluster ||= Ironfan.load_cluster(cluster_name)
+    end
+
+    def cloud
+      @cloud ||= cluster.cloud
     end
 
     #
@@ -67,6 +167,7 @@ module Ironfan
     #
     def get_relevant_slice( *predicate )
       full_target = get_slice( *predicate )
+      ui.info("Finding relevant servers to #{sub_command}:")
       display(full_target) do |svr|
         rel = relevant?(svr)
         { :relevant? => (rel ? "[blue]#{rel}[reset]" : '-' ) }
@@ -100,7 +201,7 @@ module Ironfan
       until remaining.empty?
         remaining = remaining.select(&:alive?)
         if config[:verbose]
-          ui.info "waiting: #{total - remaining.length} / #{total}, #{(Time.now - start_time).to_i}s"
+          ui.info "waiting for threads to complete: #{total - remaining.length} / #{total}, #{(Time.now - start_time).to_i}s"
           sleep 5
         else
           Formatador.redisplay_progressbar(total - remaining.length, total, {:started_at => start_time })
@@ -116,10 +217,15 @@ module Ironfan
       bootstrap = Chef::Knife::Bootstrap.new
       bootstrap.config.merge!(config)
 
+      # load SSH info from knife.rb
+      config[:ssh_user] ||= Chef::Config[:knife][:ssh_user]
+      config[:ssh_password] ||= Chef::Config[:knife][:ssh_password]
+
       bootstrap.name_args               = [ hostname ]
       bootstrap.config[:node]           = server
       bootstrap.config[:run_list]       = server.combined_run_list
       bootstrap.config[:ssh_user]       = config[:ssh_user]       || server.cloud.ssh_user
+      bootstrap.config[:ssh_password]   = config[:ssh_password]
       bootstrap.config[:attribute]      = config[:attribute]
       bootstrap.config[:identity_file]  = config[:identity_file]  || server.cloud.ssh_identity_file
       bootstrap.config[:distro]         = config[:distro]         || server.cloud.bootstrap_distro
@@ -131,20 +237,87 @@ module Ironfan
     end
 
     def run_bootstrap(node, hostname)
+      ret = 0
       bs = bootstrapper(node, hostname)
       if config[:skip].to_s == 'true'
-        ui.info "Skipping: bootstrapp #{hostname} with #{JSON.pretty_generate(bs.config)}"
-        return
+        ui.info "Skipping: bootstrap #{hostname} with #{JSON.pretty_generate(bs.config)}"
+      else
+        begin
+          ret = bs.run
+        rescue StandardError => e
+          ui.error "Error thrown when bootstrapping #{hostname} : #{e}"
+          ui.error e.backtrace.pretty_inspect
+          ui.error "Node data is : #{node.pretty_inspect}"
+          ret = BOOTSTRAP_FAILURE
+        end
       end
-      begin
-        bs.run
-      rescue StandardError => e
-        ui.warn e
-        ui.warn e.backtrace
-        ui.warn ""
-        ui.warn node.inspect
-        ui.warn ""
+
+      ui.info "Bootstrapping #{hostname} completed with exit status #{ret.to_s}"
+      ret
+    end
+
+    def bootstrap_cluster(cluster_name, target)
+      return if target.empty?
+
+      start_monitor_bootstrap(cluster_name)
+      exit_status = []
+      target.cluster.facets.each do |name, facet|
+        section("Bootstrapping machines in facet #{name}", :green)
+        monitor_thread = Thread.new(cluster_name) do |name|
+          while true
+            sleep(monitor_interval)
+            report_progress(name)
+          end
+        end
+
+        servers = target.select { |svr| svr.facet_name == facet.name and svr.in_cloud? }
+        # As each server finishes, configure it
+        watcher_threads = servers.parallelize do |svr|
+          exit_value = bootstrap_server(svr)
+          monitor_bootstrap_progress(svr, exit_value)
+          exit_value
+        end
+        exit_status += watcher_threads.map{ |t| t.join.value }
+        ## progressbar_for_threads(watcher_threads) # this bar messes up with normal logs
+
+        monitor_thread.exit
       end
+      Chef::Log.debug("Exit status of bootstrapping cluster: #{exit_status.inspect}")
+
+      exit_status.select{|i| i != SUCCESS}.empty? ? SUCCESS : BOOTSTRAP_FAILURE
+    end
+
+    def bootstrap_server(server)
+      # Run Bootstrap
+      if config[:bootstrap]
+        # Test SSH connection
+        unless config[:dry_run]
+          nil until tcp_test_ssh(server.fog_server.ipaddress) { sleep 3 }
+        end
+        # Bootstrap
+        run_bootstrap(server, server.fog_server.ipaddress)
+      else
+        return SUCCESS
+      end
+    end
+
+    def tcp_test_ssh(hostname)
+      tcp_socket = TCPSocket.new(hostname, 22)
+      readable = IO.select([tcp_socket], nil, nil, 5)
+      if readable
+        Chef::Log.debug("sshd accepting connections on #{hostname}, banner is #{tcp_socket.gets}")
+        yield
+        true
+      else
+        false
+      end
+    rescue Errno::ETIMEDOUT
+      false
+    rescue Errno::ECONNREFUSED
+      sleep 2
+      false
+    ensure
+      tcp_socket && tcp_socket.close
     end
 
     #
@@ -167,7 +340,7 @@ module Ironfan
     # Announce a new section of tasks
     #
     def section(desc, *style)
-      style = [:blue] if style.empty?
+      style = [:green] if style.empty?
       ui.info(ui.color(desc, *style))
     end
 
@@ -183,7 +356,7 @@ module Ironfan
       def import_banner_and_options(klass, options={})
         options[:except] ||= []
         deps{ klass.load_deps }
-        klass.options.sort.each do |name, info|
+        klass.options.sort_by{|k,v| k.to_s}.each do |name, info|
           next if options.include?(name) || options[:except].include?(name)
           option name, info
         end
@@ -194,6 +367,70 @@ module Ironfan
     def self.included(base)
       base.class_eval do
         extend ClassMethods
+      end
+    end
+  end
+end
+
+#
+# Override the methods in Chef::Knife::Ssh to return the exit value of SSH command
+#
+class Chef
+  class Knife
+    class Ssh < Knife
+      def run
+        extend Chef::Mixin::Command
+
+        @longest = 0
+
+        configure_attribute
+        configure_user
+        configure_identity_file
+        configure_session
+
+        exit_status = 
+        case @name_args[1]
+        when "interactive"
+          interactive
+        when "screen"
+          screen
+        when "tmux"
+          tmux
+        when "macterm"
+          macterm
+        when "csshx"
+          csshx
+        else
+          ssh_command(@name_args[1..-1].join(" "))
+        end
+
+        session.close
+        exit_status
+      end
+
+      def ssh_command(command, subsession=nil)
+        exit_status = 0
+        subsession ||= session
+        command = fixup_sudo(command)
+        subsession.open_channel do |ch|
+          ch.request_pty
+          ch.exec command do |ch, success|
+            raise ArgumentError, "Cannot execute #{command}" unless success
+            # note: you can't do the stderr calback because requesting a pty
+            # squashes stderr and stdout together
+            ch.on_data do |ichannel, data|
+              print_data(ichannel[:host], data)
+              if data =~ /^knife sudo password: /
+                ichannel.send_data("#{get_password}\n")
+              end
+            end
+            ch.on_request "exit-status" do |ichannel, data|
+              exit_status = data.read_long
+            end
+          end
+        end
+        session.loop
+        exit_status
       end
     end
   end

@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +17,12 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_knife_common', File.dirname(File.realdirpath(__FILE__)))
-require File.expand_path('cluster_bootstrap',    File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_knife_common', File.dirname(__FILE__))
+require File.expand_path('cluster_bootstrap',    File.dirname(__FILE__))
 
 class Chef
   class Knife
-    class ClusterLaunch < Knife
-      include Ironfan::KnifeCommon
+    class ClusterLaunch < Ironfan::Script
 
       deps do
         require 'time'
@@ -55,93 +55,63 @@ class Chef
         :boolean     => true,
         :default     => false
 
-      def run
-        load_ironfan
-        die(banner) if @name_args.empty?
-        configure_dry_run
+      def relevant?(server)
+        server.launchable?
+      end
 
-        #
-        # Load the facet
-        #
-        full_target = get_slice(*@name_args)
-        display(full_target)
-        target = full_target.select(&:launchable?)
-
-        warn_or_die_on_bogus_servers(full_target) unless full_target.bogus_servers.empty?
-
-        die("", "#{ui.color("All servers are running -- not launching any.",:blue)}", "", 1) if target.empty?
-
+      def perform_execution(target)
         # Pre-populate information in chef
         section("Sync'ing to chef and cloud")
         target.sync_to_cloud
         target.sync_to_chef
 
         # Launch servers
-        section("Launching machines", :green)
-        target.create_servers
+        section("Creating machines in Cloud", :green)
+        ret = target.create_servers
+        die('Creating cluster VMs failed. Abort!', CREATE_FAILURE) if !ret
 
-        ui.info("")
-        display(target)
+        # Sync attached disks info and other info to Chef
+        section("Sync'ing to chef after cluster VMs are created")
+        target.sync_to_chef
 
-        # As each server finishes, configure it
-        watcher_threads = target.parallelize do |svr|
-          perform_after_launch_tasks(svr)
+        exit_status = 0
+        if config[:bootstrap]
+          display(target)
+          exit_status = bootstrap_cluster(cluster_name, target)
         end
 
-        progressbar_for_threads(watcher_threads)
-
-        display(target)
+        section("Creating cluster completed.")
+        exit_status
       end
 
       def display(target)
-        super(target, ["Name", "InstanceID", "State", "Flavor", "Image", "AZ", "Public IP", "Private IP", "Created At", 'Volumes', 'Elastic IP']) do |svr|
-          { 'launchable?' => (svr.launchable? ? "[blue]#{svr.launchable?}[reset]" : '-' ), }
+        super(target, ["Name", "InstanceID", "State", "Flavor", "Image", "Public IP", "Private IP", "Created At"]) do |svr|
+          { 'Launchable?' => (svr.launchable? ? "[blue]#{svr.launchable?}[reset]" : '-' ), }
         end
       end
 
-      def perform_after_launch_tasks(server)
-        # Wait for node creation on amazon side
-        server.fog_server.wait_for{ ready? }
-
-        # Try SSH
-        unless config[:dry_run]
-          nil until tcp_test_ssh(server.public_hostname){ sleep @initial_sleep_delay ||= 10  }
-        end
-
-        # Make sure our list of volumes is accurate
-        Ironfan.fetch_fog_volumes
-        server.discover_volumes!
-
-        # Attach volumes, etc
-        server.sync_to_cloud
-
-        # Run Bootstrap
-        if config[:bootstrap]
-          run_bootstrap(server, server.public_hostname)
-        end
-      end
-
-      def tcp_test_ssh(hostname)
-        tcp_socket = TCPSocket.new(hostname, 22)
-        readable = IO.select([tcp_socket], nil, nil, 5)
-        if readable
-          Chef::Log.debug("sshd accepting connections on #{hostname}, banner is #{tcp_socket.gets}")
-          yield
-          true
-        else
-          false
-        end
-      rescue Errno::ETIMEDOUT
-        false
-      rescue Errno::ECONNREFUSED
-        sleep 2
-        false
-      rescue Errno::EHOSTUNREACH
-        sleep 2
-        false
-      ensure
-        tcp_socket && tcp_socket.close
-      end
+      ## This is probably necessary for EC2; leaving available
+      # def perform_after_launch_tasks(server)
+      #   # Wait for node creation on amazon side
+      #   server.fog_server.wait_for{ ready? }
+      # 
+      #   # Try SSH
+      #   unless config[:dry_run]
+      #     nil until tcp_test_ssh(server.public_hostname){ sleep @initial_sleep_delay ||= 10  }
+      #   end
+      # 
+      #   # Make sure our list of volumes is accurate
+      #   Ironfan.fetch_fog_volumes
+      #   server.discover_volumes!
+      # 
+      #   # Attach volumes, etc
+      #   server.sync_to_cloud
+      # 
+      #   # Run Bootstrap
+      #   if config[:bootstrap]
+      #     run_bootstrap(server, server.public_hostname)
+      #   end
+      # end
 
       def warn_or_die_on_bogus_servers(target)
         ui.info("")
@@ -161,7 +131,6 @@ class Chef
         ui.info "Proceeding to launch anyway. This may produce undesired results."
         ui.info("")
       end
-
     end
   end
 end

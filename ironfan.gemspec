@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "ironfan"
-  s.version = "3.1.5"
+  s.version = "3.2.0.alpha"
 
-  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
+  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Infochimps"]
-  s.date = "2012-04-02"
+  s.date = "2012-06-18"
   s.description = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
   s.email = "coders@infochimps.com"
   s.extra_rdoc_files = [
@@ -34,9 +34,12 @@ Gem::Specification.new do |s|
     "config/ubuntu10.04-ironfan.erb",
     "config/ubuntu11.10-ironfan.erb",
     "ironfan.gemspec",
+    "lib/chef/knife/bootstrap/centos5-vmware.erb",
+    "lib/chef/knife/bootstrap/centos6.2-ironfan.erb",
     "lib/chef/knife/bootstrap/ubuntu10.04-ironfan.erb",
     "lib/chef/knife/bootstrap/ubuntu11.10-ironfan.erb",
     "lib/chef/knife/cluster_bootstrap.rb",
+    "lib/chef/knife/cluster_create.rb",
     "lib/chef/knife/cluster_kick.rb",
     "lib/chef/knife/cluster_kill.rb",
     "lib/chef/knife/cluster_launch.rb",
@@ -62,14 +65,25 @@ Gem::Specification.new do |s|
     "lib/ironfan/deprecated.rb",
     "lib/ironfan/discovery.rb",
     "lib/ironfan/dsl_object.rb",
+    "lib/ironfan/ec2/cloud.rb",
+    "lib/ironfan/ec2/cluster.rb",
+    "lib/ironfan/ec2/facet.rb",
+    "lib/ironfan/ec2/server.rb",
+    "lib/ironfan/ec2/server_slice.rb",
     "lib/ironfan/facet.rb",
-    "lib/ironfan/fog_layer.rb",
+    "lib/ironfan/iaas_layer.rb",
+    "lib/ironfan/monitor.rb",
     "lib/ironfan/private_key.rb",
     "lib/ironfan/role_implications.rb",
     "lib/ironfan/security_group.rb",
     "lib/ironfan/server.rb",
     "lib/ironfan/server_slice.rb",
     "lib/ironfan/volume.rb",
+    "lib/ironfan/vsphere/cloud.rb",
+    "lib/ironfan/vsphere/cluster.rb",
+    "lib/ironfan/vsphere/facet.rb",
+    "lib/ironfan/vsphere/server.rb",
+    "lib/ironfan/vsphere/server_slice.rb",
     "notes/Home.md",
     "notes/INSTALL-cloud_setup.md",
     "notes/INSTALL.md",
@@ -99,6 +113,10 @@ Gem::Specification.new do |s|
     "notes/tips_and_troubleshooting.md",
     "notes/walkthrough-hadoop.md",
     "notes/walkthrough-web.md",
+    "spec/data/cluster_definition.json",
+    "spec/data/clusters/hadoopcluster.rb",
+    "spec/data/clusters/webserver_demo.rb",
+    "spec/ironfan/cluster_create_spec.rb",
     "spec/ironfan/cluster_spec.rb",
     "spec/ironfan/facet_spec.rb",
     "spec/ironfan/server_slice_spec.rb",
@@ -112,9 +130,9 @@ Gem::Specification.new do |s|
   s.homepage = "http://infochimps.com/labs"
   s.licenses = ["apachev2"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.11"
+  s.rubygems_version = "1.8.15"
   s.summary = "Ironfan allows you to orchestrate not just systems but clusters of machines. It includes a powerful layer on top of knife and a collection of cloud cookbooks."
-  s.test_files = ["spec/ironfan/cluster_spec.rb", "spec/ironfan/facet_spec.rb", "spec/ironfan/server_slice_spec.rb", "spec/ironfan/server_spec.rb", "spec/ironfan_spec.rb", "spec/spec_helper/dummy_chef.rb", "spec/spec_helper.rb", "spec/test_config.rb"]
+  s.test_files = ["spec/ironfan_spec.rb", "spec/spec_helper/dummy_chef.rb", "spec/data/cluster_definition.json", "spec/data/clusters/webserver_demo.rb", "spec/data/clusters/hadoopcluster.rb", "spec/ironfan/cluster_spec.rb", "spec/ironfan/server_slice_spec.rb", "spec/ironfan/cluster_create_spec.rb", "spec/ironfan/server_spec.rb", "spec/ironfan/facet_spec.rb", "spec/spec_helper.rb", "spec/test_config.rb"]
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
@@ -124,6 +142,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<fog>, ["~> 1.3.1"])
       s.add_runtime_dependency(%q<formatador>, ["~> 0.2.1"])
       s.add_runtime_dependency(%q<gorillib>, ["~> 0.1.7"])
+      s.add_runtime_dependency(%q<cloud-manager>, [">= 0"])
       s.add_development_dependency(%q<bundler>, ["~> 1"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.6"])
       s.add_development_dependency(%q<rspec>, ["~> 2.5"])
@@ -134,6 +153,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<fog>, ["~> 1.3.1"])
       s.add_dependency(%q<formatador>, ["~> 0.2.1"])
       s.add_dependency(%q<gorillib>, ["~> 0.1.7"])
+      s.add_dependency(%q<cloud-manager>, [">= 0"])
       s.add_dependency(%q<bundler>, ["~> 1"])
       s.add_dependency(%q<jeweler>, ["~> 1.6"])
       s.add_dependency(%q<rspec>, ["~> 2.5"])
@@ -145,6 +165,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<fog>, ["~> 1.3.1"])
     s.add_dependency(%q<formatador>, ["~> 0.2.1"])
     s.add_dependency(%q<gorillib>, ["~> 0.1.7"])
+    s.add_dependency(%q<cloud-manager>, [">= 0"])
     s.add_dependency(%q<bundler>, ["~> 1"])
     s.add_dependency(%q<jeweler>, ["~> 1.6"])
     s.add_dependency(%q<rspec>, ["~> 2.5"])

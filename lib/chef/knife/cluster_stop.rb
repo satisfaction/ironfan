@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_script', File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_script', File.dirname(__FILE__))
 
 class Chef
   class Knife
@@ -28,10 +29,15 @@ class Chef
       end
 
       def perform_execution(target)
-        section("Stopping machines")
-        super(target)
+        section("Stopping cluster #{cluster_name}")
+        ret = super(target)
+        die('Stopping cluster failed. Abort!', STOP_FAILURE) if !ret
+
         section("Announcing Chef nodes as stopped")
         target.send(:delegate_to_servers, :announce_as_stopped)
+
+        section("Stopping cluster completed.")
+        ret
       end
 
       def confirm_execution(target)

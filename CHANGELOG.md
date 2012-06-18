@@ -1,6 +1,15 @@
+# v3.2.0: Merging in Serengeti refactoring into Ironfan core
+
 # v3.1.5: A bug with quoting in bootstrap scripts
 
 * Bootstrap scripts with env vars were being interpolated twice, so the bootstrap script quoting was changed to use `'` (single-quote) semantics. I am a bit troubled, because I can't tell when this regression happened. I believe I introduced it while merging @gpaco's bootstrap scripts and didn't notice because the bug strikes most forcefully within the fenced-off 'Is ruby installed?' part. But there's a chance I just screwed over chef 0.10.04 users.
+
+# 3.1.4.serengeti.1: Refactor Ironfan to work with VMware vSphere 5.0 in addition to EC2
+
+* Refactor Ironfan code architecture to support multi cloud providers gracefully.
+* Add full support for vSphere Cloud (i.e. create and manage VMs in VMware vCenter server).
+* Add monitor function to Ironfan to enable Ironfan report progress of cluster operation and bootstrap to a RabbitMQ server.
+
 
 # v3.1.4: The inevitable post-launch tweaks
 

@@ -1,4 +1,19 @@
 #
+#   Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
+#
 # OK so things get a little fishy here, and it's all Opscode's fault ;-)
 #
 # There's currently no API for setting ACLs. However, if the *client the
@@ -43,7 +58,7 @@ module Ironfan
     def new_chef_role(role_name, cluster, facet=nil)
       chef_role = Chef::Role.new
       chef_role.name        role_name
-      chef_role.description "Ironfan generated role for #{[cluster_name, facet_name].compact.join('-')}" unless chef_role.description
+      chef_role.description "Ironfan generated role for #{[cluster.name, facet ? facet.name : nil].compact.join('-')}"
       chef_role.instance_eval{ @cluster = cluster; @facet = facet; }
       @chef_roles << chef_role
       chef_role
@@ -105,6 +120,7 @@ module Ironfan
         end
         @chef_client = nil
       end
+      true
     end
 
     # creates or updates the chef node.
@@ -192,12 +208,9 @@ module Ironfan
       end
     end
 
-
+    # Sync volume attributes. This can be overridden in subclass if needed
     def sync_volume_attributes
-      composite_volumes.each do |vol_name, vol|
-        chef_node.normal[:volumes] ||= Mash.new
-        chef_node.normal[:volumes][vol_name] = vol.to_mash.compact
-      end
+      step("    updating volume attributes")
     end
 
     def set_chef_node_attributes
@@ -205,9 +218,9 @@ module Ironfan
       @chef_node.run_list = Chef::RunList.new(*@settings[:run_list])
       @chef_node.normal[:organization]   = organization if organization
       @chef_node.normal[:permanent]      = cloud.permanent if cloud.permanent
-      @chef_node.override[:cluster_name] = cluster_name
-      @chef_node.override[:facet_name]   = facet_name
-      @chef_node.override[:facet_index]  = facet_index
+      @chef_node.normal[:cluster_name] = cluster_name
+      @chef_node.normal[:facet_name]   = facet_name
+      @chef_node.normal[:facet_index]  = facet_index
     end
 
     def set_chef_node_environment

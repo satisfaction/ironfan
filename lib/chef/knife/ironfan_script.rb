@@ -1,6 +1,7 @@
 #
 # Author:: Philip (flip) Kromer (<flip@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_knife_common', File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_knife_common', File.dirname(__FILE__))
 
 module Ironfan
   class Script < Chef::Knife
@@ -36,27 +37,41 @@ module Ironfan
       :description => "Skip confirmation prompts on risky actions.",
       :boolean     => true
 
+    option :from_file,
+      :long        => "--fromfile FILENAME",
+      :short       => "-f FILENAME",
+      :description => "Specify the file containing the cluster definition in json format. And specify --yes to overwrite existing cluster file.",
+      :required    => false
+
     def run
       load_ironfan
       die(banner) if @name_args.empty?
       configure_dry_run
 
       target = get_relevant_slice(* @name_args)
+      if target.empty?
+        ui.info("No nodes to #{sub_command}, exiting")
+        exit 0
+      end
 
-      die("No nodes to #{sub_command}, exiting", 1) if target.empty?
+      ui.info(["\n", ui.color("Running #{sub_command}", :cyan), " on #{target.joined_names} ..."].join())
+      display(target)
 
-      ui.info(["\n",
-          ui.color("Running #{sub_command}", :cyan),
-          " on #{target.joined_names}..."].join())
       unless config[:yes]
         ui.info("")
         confirm_execution(target)
       end
-      #
-      perform_execution(target)
+
+      exit_value = perform_execution(target)
+
+      target.sync_to_cloud
+
       ui.info("")
       ui.info "Finished! Current state:"
       display(target)
+
+      Chef::Log.debug("Exit value of Knife command is: #{exit_value.inspect}")
+      exit_value
     end
 
     def perform_execution(target)

@@ -41,7 +41,7 @@ class Chef
     #
     #
     class ClusterVagrant < Knife
-      IRONFAN_DIR = File.dirname(File.realdirpath(__FILE__))
+      IRONFAN_DIR = File.dirname(__FILE__)
       require File.expand_path('ironfan_knife_common', IRONFAN_DIR)
       include Ironfan::KnifeCommon
 
@@ -119,7 +119,7 @@ class Chef
         env = Vagrant::IronfanEnvironment.new(
           :ui_class    => Vagrant::UI::Colored,
           :cwd         => cluster_vagrant_dir,
-          :log_level   => log_level,
+          :log_level   => log_level
           )
 
         #

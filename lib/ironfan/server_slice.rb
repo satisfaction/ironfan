@@ -1,3 +1,18 @@
+#
+#   Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
 module Ironfan
   #
   # A server group is a set of actual or implied servers.
@@ -6,12 +21,13 @@ module Ironfan
   #
   #
   class ServerSlice < Ironfan::DslObject
-    attr_reader :name, :servers, :cluster
+    attr_reader :name, :servers, :cluster, :cloud
 
     def initialize cluster, servers
       super()
       @name    = "#{cluster.name} slice"
       @cluster = cluster
+      @cloud   = cluster.cloud
       @servers = servers
     end
 
@@ -30,7 +46,7 @@ module Ironfan
     end
     [:select, :find_all, :reject, :detect, :find, :drop_while].each do |method|
       define_method(method) do |*args, &block|
-        ServerSlice.new cluster, @servers.send(method, *args, &block)
+        self.class.new cluster, @servers.send(method, *args, &block)
       end
     end
     # true if slice contains a server with the given fullname (if arg is a
@@ -58,18 +74,16 @@ module Ironfan
     # Info!
     #
 
+    def cluster_name
+      @cluster.cluster_name
+    end
+
     def chef_nodes
       servers.map(&:chef_node).compact
     end
 
     def fog_servers
       servers.map(&:fog_server).compact
-    end
-
-    def security_groups
-      sg = {}
-      servers.each{|svr| sg.merge!(svr.cloud.security_groups) }
-      sg
     end
 
     def facets
@@ -90,7 +104,7 @@ module Ironfan
     # Actions!
     #
 
-    def start
+    def start(bootstrap = false)
       delegate_to_fog_servers( :start  )
       delegate_to_fog_servers( :reload  )
     end
@@ -109,8 +123,8 @@ module Ironfan
       delegate_to_fog_servers( :reload  )
     end
 
-    def create_servers
-      delegate_to_servers( :create_server )
+    def create_servers( threaded = true )
+      delegate_to_servers( :create_server, threaded )
     end
 
     def delete_chef
@@ -118,8 +132,6 @@ module Ironfan
     end
 
     def sync_to_cloud
-      sync_keypairs
-      sync_security_groups
       delegate_to_servers( :sync_to_cloud )
     end
 
@@ -129,24 +141,13 @@ module Ironfan
     end
 
     #
-    # Display!
+    # Display Servers in console!
     #
 
     # FIXME: this is a jumble. we need to pass it in some other way.
-
     MINIMAL_HEADINGS  = ["Name", "Chef?", "State", "InstanceID", "Public IP", "Private IP", "Created At"].to_set.freeze
-    DEFAULT_HEADINGS  = (MINIMAL_HEADINGS + ['Flavor', 'AZ', 'Env']).freeze
-    EXPANDED_HEADINGS = DEFAULT_HEADINGS + ['Image', 'Volumes', 'Elastic IP', 'SSH Key']
-
-    MACHINE_STATE_COLORS  = {
-      'running'       => :green,
-      'pending'       => :yellow,
-      'stopping'      => :magenta,
-      'shutting-down' => :magenta,
-      'stopped'       => :cyan,
-      'terminated'    => :blue,
-      'not running'   => :blue,
-    }
+    DEFAULT_HEADINGS  = (MINIMAL_HEADINGS + ['Flavor', 'Image']).freeze
+    EXPANDED_HEADINGS = DEFAULT_HEADINGS + ['Volumes', 'Env'].freeze
 
     #
     # This is a generic display routine for cluster-like sets of nodes. If you
@@ -163,10 +164,9 @@ module Ironfan
         when :minimal  then MINIMAL_HEADINGS
         when :default  then DEFAULT_HEADINGS
         when :expanded then EXPANDED_HEADINGS
-        else hh.to_set end
+        else hh.to_set
+        end
       headings += ["Bogus"] if servers.any?(&:bogus?)
-      # probably not necessary any more
-      # servers = servers.sort{ |a,b| (a.facet_name <=> b.facet_name) *9 + (a.facet_index.to_i <=> b.facet_index.to_i)*3 + (a.facet_index <=> b.facet_index) }
       defined_data = servers.map do |svr|
         hsh = {
           "Name"   => svr.fullname,
@@ -176,35 +176,21 @@ module Ironfan
           "Bogus"  => (svr.bogus? ? "[red]#{svr.bogosity}[reset]" : ''),
           "Env"    => svr.environment,
         }
-        # if (cs = svr.chef_server)
-        #   hsh.merge!(
-        #     "Env"    => cs.environment,
-        #     )
-        # end
+
         if (fs = svr.fog_server)
           hsh.merge!(
-              "InstanceID" => (fs.id && fs.id.length > 0) ? fs.id : "???",
+              "InstanceID" => (fs.id && fs.id.length > 0) ? fs.id : nil,
               "Flavor"     => fs.flavor_id,
               "Image"      => fs.image_id,
-              "AZ"         => fs.availability_zone,
-              "SSH Key"    => fs.key_name,
-              "State"      => "[#{MACHINE_STATE_COLORS[fs.state] || 'white'}]#{fs.state}[reset]",
+              "State"      => "[#{svr.running? ? 'green' : 'blue'}]#{fs.state}[reset]",
               "Public IP"  => fs.public_ip_address,
               "Private IP" => fs.private_ip_address,
-              "Created At" => fs.created_at.strftime("%Y%m%d-%H%M%S")
+              "Created At" => fs.created_at ? fs.created_at.strftime("%Y%m%d-%H%M%S") : nil
             )
         else
-          hsh["State"] = "not running"
+          hsh["State"] = "Not Exist"
         end
-        hsh['Volumes'] = []
-        svr.composite_volumes.each do |name, vol|
-          if    vol.ephemeral_device? then next
-          elsif vol.volume_id         then hsh['Volumes'] << vol.volume_id
-          elsif vol.create_at_launch? then hsh['Volumes'] << vol.snapshot_id
-          end
-        end
-        hsh['Volumes']    = hsh['Volumes'].join(',')
-        hsh['Elastic IP'] = svr.cloud.public_ip if svr.cloud.public_ip
+
         if block_given?
           extra_info = yield(svr)
           hsh.merge!(extra_info)
@@ -212,9 +198,8 @@ module Ironfan
         end
         hsh
       end
-      if defined_data.empty?
-        ui.info "Nothing to report"
-      else
+
+      if !defined_data.empty?
         Formatador.display_compact_table(defined_data, headings.to_a)
       end
     end

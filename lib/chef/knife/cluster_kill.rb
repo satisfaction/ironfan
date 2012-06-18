@@ -1,6 +1,7 @@
 #
 # Author:: Chris Howe (<howech@infochimps.com>)
 # Copyright:: Copyright (c) 2011 Infochimps, Inc
+# Portions Copyright (c) 2012 VMware, Inc. All rights Reserved.
 # License:: Apache License, Version 2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 # limitations under the License.
 #
 
-require File.expand_path('ironfan_script', File.dirname(File.realdirpath(__FILE__)))
+require File.expand_path('ironfan_script', File.dirname(__FILE__))
 
 class Chef
   class Knife
@@ -43,17 +44,23 @@ class Chef
         server.killable?
       end
 
-      # Execute every last mf'ing one of em
       def perform_execution(target)
+        ret = true
+
         if config[:cloud]
-          section("Killing Cloud Machines")
-          target.select(&:in_cloud?).destroy
+          section("Deleting Cloud Machines")
+          ret = target.select(&:in_cloud?).destroy
+          die('Deleting VMs of cluster failed. Abort!', DELETE_FAILURE) if !ret
         end
 
         if config[:chef]
-          section("Killing Chef")
-          target.select(&:in_chef? ).delete_chef
+          section("Deleting Chef Nodes")
+          ret = target.select(&:in_chef? ).delete_chef
+          die('Deleting Chef Nodes of cluster failed. Abort!', DELETE_FAILURE) if !ret
         end
+
+        section("Deleting cluster completed.")
+        ret
       end
 
       def display(target, *args, &block)

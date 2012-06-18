@@ -1,3 +1,18 @@
+#
+#   Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
 require 'chef/mash'
 require 'chef/config'
 #
@@ -6,7 +21,7 @@ require 'gorillib/hash/reverse_merge'
 require 'gorillib/object/blank'
 require 'gorillib/hash/compact'
 require 'set'
-
+#
 require 'ironfan/dsl_object'
 require 'ironfan/cloud'
 require 'ironfan/security_group'
@@ -21,9 +36,12 @@ require 'ironfan/private_key'       # coordinate chef keys, cloud keypairs, etc
 require 'ironfan/role_implications' # make roles trigger other actions (security groups, etc)
 #
 require 'ironfan/chef_layer'        # interface to chef for server actions
-require 'ironfan/fog_layer'         # interface to fog  for server actions
 #
 require 'ironfan/deprecated'        # stuff slated to go away
+#
+# include cloud providers
+require 'ironfan/vsphere/cluster'
+require 'ironfan/ec2/cluster'
 
 module Ironfan
 
@@ -52,7 +70,7 @@ module Ironfan
   # Defines a cluster with the given name.
   #
   # @example
-  #   Ironfan.cluster 'demosimple' do
+  #   Ironfan.cluster :ec2, 'demosimple' do
   #     cloud :ec2 do
   #       availability_zones  ['us-east-1d']
   #       flavor              "t1.micro"
@@ -68,9 +86,8 @@ module Ironfan
   #   end
   #
   #
-  def self.cluster(name, attrs={}, &block)
-    name = name.to_sym
-    cl = ( self.clusters[name] ||= Ironfan::Cluster.new(name, attrs) )
+  def self.cluster(provider, name, attrs = {}, &block)
+    cl = ( self.clusters[name] ||= self.new_cluster(provider, name, attrs) )
     cl.configure(&block)
     cl
   end
@@ -114,12 +131,83 @@ module Ironfan
   end
 
   #
+  # Create a cluster under Ironfan.cluster_path and return the cluster it defines.
+  #
+  # @param [String] cluster_def_file -- full path of the file containing the cluster definition in json format.
+  # @param overwrite -- whether overwrite existing cluster file.
+  #
+  # @return [Ironfan::Cluster] the created cluster.
+  #
+  def self.create_cluster(cluster_def_file, overwrite = false)
+    raise ArgumentError, "Please supply a cluster definition file" if cluster_def_file.to_s.empty?
+
+    # get cluster definition from json file
+    cluster_def = JSON.parse(File.read(cluster_def_file))['cluster_definition']
+    cluster_name = cluster_def['name']
+    die("'name' of cluster is not specified in #{cluster_def_file}") if !cluster_name
+
+    # check whether target cluster file exists
+    cluster_filename = cluster_filenames[cluster_name]
+    if cluster_filename and !overwrite
+      die("Cluster #{cluster_name} already exists in #{cluster_filename}. Aborted.")
+    end
+
+    # create new Cluster object
+    cloud_provider_def = JSON.parse(File.read(cluster_def_file))['cloud_provider']
+    cloud_provider_name = cloud_provider_def['name'].to_sym
+    cluster = Ironfan.cluster(cloud_provider_name, cluster_name)
+    cluster.cloud cloud_provider_name
+    cluster.cloud.flavor 'default' # FIXME: should not be hard coded in future
+
+    cluster_def.each do |key, value|
+      case key
+      when 'distro'
+        cluster.hadoop_distro cluster_def[key]
+        cluster.cluster_role do
+          override_attributes({ :hadoop => { :distro_name => cluster.hadoop_distro } })
+        end
+      when 'template_id'
+        # cluster.cloud.image_name value
+        cluster.cloud.image_name 'centos5' # FIXME: should not be hard coded in future
+      when 'flavor'
+        cluster.cloud.flavor value
+      when 'roles'
+        value.each do |role|
+          cluster.role role
+        end
+      when 'groups'
+        facets = cluster_def[key]
+        facets.each do |facet_def|
+          facet = cluster.facet(facet_def['name'])
+          facet_def.each do |key, value|
+            case key
+            when 'template_id'
+              facet.cloud(cloud_provider_name).image_name value
+            when 'instance_num'
+              facet.instances value
+            when 'roles'
+              value.each do |role|
+                facet.role role
+              end
+            end
+          end
+        end
+      end
+    end
+
+    # save Cluster object
+    cluster.save
+
+    load_cluster(cluster_name)
+  end
+
+  #
   # Utility to die with an error message.
   # If the last arg is an integer, use it as the exit code.
   #
   def self.die *strings
     exit_code = strings.last.is_a?(Integer) ? strings.pop : -1
-    strings.each{|str| ui.warn str }
+    strings.each{|str| ui.error str }
     exit exit_code
   end
 
@@ -128,7 +216,7 @@ module Ironfan
   #
   # @example
   #   Ironfan.safely do
-  #     Ironfan.fog_connection.associate_address(self.fog_server.id, address)
+  #     cloud.fog_connection.associate_address(self.fog_server.id, address)
   #   end
   #
   def self.safely
@@ -139,5 +227,25 @@ module Ironfan
       Chef::Log.error( boom )
       Chef::Log.error( boom.backtrace.join("\n") )
     end
+  end
+
+  protected
+
+  # Create a new Cluster instance with the specified provider type and name
+  def self.new_cluster(provider, name, attrs)
+    provider = provider.to_sym
+    name = name.to_sym
+
+    cluster =
+      case provider
+      when :ec2
+        Ironfan::Ec2::Cluster.new(name, attrs)
+      when :vsphere
+        Ironfan::Vsphere::Cluster.new(name, attrs)
+      else
+        raise "Unknown cloud provider #{provider.inspect}. Only supports :ec2 and :vsphere so far."
+      end
+
+    cluster
   end
 end

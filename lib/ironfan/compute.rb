@@ -1,3 +1,22 @@
+#
+#   Portions Copyright (c) 2012 VMware, Inc. All Rights Reserved.
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+
+# include cloud providers
+require 'ironfan/ec2/cloud'
+require 'ironfan/vsphere/cloud'
+
 module Ironfan
   #
   # Base class allowing us to layer settings for facet over cluster
@@ -36,11 +55,28 @@ module Ironfan
     #     region         'us-east-1d'
     #   end
     #
-    def cloud(cloud_provider=nil, attrs={}, &block)
-      raise "Only have ec2 so far" if cloud_provider && (cloud_provider != :ec2)
-      @cloud ||= Ironfan::Cloud::Ec2.new(self)
-      @cloud.configure(attrs, &block)
+    def cloud cloud_provider=nil, hsh={}, &block
+      return @cloud if @cloud or cloud_provider.nil?
+      case cloud_provider
+        when :ec2
+          @cloud ||= Ironfan::Ec2::Cloud.new(self)
+        when :vsphere
+          @cloud ||= Ironfan::Vsphere::Cloud.new(self)
+        else
+          raise "Unknown cloud provider #{cloud_provider.inspect}. Only supports :ec2 and :vsphere so far."
+      end
+      @cloud.configure(hsh, &block) if block
+      after_cloud_created(hsh)
       @cloud
+    end
+
+    # An abstract method for doing some tasks after the Cloud object is created
+    def after_cloud_created(attrs)
+    end
+
+    # sugar for cloud(:vsphere)
+    def vsphere(attrs={}, &block)
+      cloud(:vsphere, attrs, &block)
     end
 
     # sugar for cloud(:ec2)
