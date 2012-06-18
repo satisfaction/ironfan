@@ -42,7 +42,7 @@ module Ironfan
       # Override VM actions methods defined in base class
       #
       def sync_to_cloud
-        super
+        step "Syncing to cloud"
         attach_volumes
         create_tags
         associate_public_ip

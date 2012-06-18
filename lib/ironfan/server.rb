@@ -236,8 +236,8 @@ module Ironfan
     #
 
     def sync_to_cloud
-      step "Syncing to cloud"
-      raise_not_implemented
+      ## Not an essential step, currently; can be a no-op
+      # raise_not_implemented
     end
 
     def sync_to_chef
