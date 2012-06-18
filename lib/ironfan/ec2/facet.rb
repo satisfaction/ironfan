@@ -15,17 +15,26 @@
 
 module Ironfan
   module Ec2
-    class Facet < Ironfan::Cluster
+    class Facet < Ironfan::Facet
 
-      def after_cloud_created(attrs)
-        create_facet_security_group unless attrs[:no_security_group]
+      def initialize(*args)
+        super(*args)
       end
 
-      # Create a security group named for the facet
-      # which is friends with everything in the facet
-      def create_facet_security_group
-        cloud.security_group("#{cluster_name}-#{facet_name}")
+      def new_server(*args)
+        Ironfan::Ec2::Server.new(*args)
       end
+
+      ## Removed calls that appear to depend on descending from Ironfan::Cluster
+      # def after_cloud_created(attrs)
+      #   create_facet_security_group unless attrs[:no_security_group]
+      # end
+      # 
+      # # Create a security group named for the facet
+      # # which is friends with everything in the facet
+      # def create_facet_security_group
+      #   cloud.security_group("#{cluster_name}-#{facet_name}")
+      # end
 
     end
   end

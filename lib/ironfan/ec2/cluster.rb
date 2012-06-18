@@ -26,6 +26,10 @@ module Ironfan
         super(:ec2, *args)
       end
 
+      def new_facet(*args)
+        Ironfan::Ec2::Facet.new(*args)
+      end
+
       def discover!
         @aws_instance_hash = {}
         super

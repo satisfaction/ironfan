@@ -125,6 +125,14 @@ module Ironfan
         end
       end
 
+      def vpc(val=nil)
+        set :vpc, val
+      end
+
+      def subnet(val=nil)
+        set :subnet, val
+      end
+
       def flavor(val=nil)
         if val && (not FLAVOR_INFO.has_key?(val.to_s))
           ui.warn("Unknown machine image flavor '#{val}'")

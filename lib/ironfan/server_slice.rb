@@ -188,7 +188,7 @@ module Ironfan
               "Created At" => fs.created_at ? fs.created_at.strftime("%Y%m%d-%H%M%S") : nil
             )
         else
-          hsh["State"] = "Not Exist"
+          hsh["State"] = "not running"
         end
 
         if block_given?
