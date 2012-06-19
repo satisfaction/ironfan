@@ -142,8 +142,8 @@ end
 
 ## Retaining things that the vSphere refactor tossed out, as they are probably
 ##   necessary for EC2 usage. Probably need to refactor them into files in ec2/
-# module Ironfan
-# 
+module Ironfan
+
 #   def self.fog_volumes
 #     @fog_volumes || fetch_fog_volumes
 #   end
@@ -159,9 +159,9 @@ end
 #     @fog_keypairs = {}.tap{|hsh| Ironfan.fog_connection.key_pairs.each{|kp| hsh[kp.name] = kp } }
 #   end
 # 
-#   def self.dry_run?
-#     Ironfan.chef_config[:dry_run]
-#   end
+  def self.dry_run?
+    Ironfan.chef_config[:dry_run]
+  end
 # 
 #   def self.placement_groups
 #     return @placement_groups if @placement_groups
@@ -176,4 +176,4 @@ end
 #     Ironfan.safely(*args, &block)
 #   end
 # 
-# end
+end
