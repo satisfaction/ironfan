@@ -32,16 +32,6 @@ module Ironfan
         f
       end
 
-      def discover!
-        @aws_instance_hash = {}
-        super
-        discover_volumes!
-      end
-
-      def discover_volumes!
-        servers.each(&:discover_volumes!)
-      end
-
       def discover_addresses!
         servers.each(&:discover_addresses!)
       end

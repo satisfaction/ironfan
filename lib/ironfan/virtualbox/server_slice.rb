@@ -54,7 +54,7 @@ module Ironfan
       # FIXME: this is a jumble. we need to pass it in some other way.
       MINIMAL_HEADINGS  = ["Name", "Chef?", "State", "InstanceID", "Public IP", "Private IP", "Created At"].to_set.freeze
       DEFAULT_HEADINGS  = (MINIMAL_HEADINGS + ['Flavor', 'AZ', 'Env']).freeze
-      EXPANDED_HEADINGS = DEFAULT_HEADINGS + ['Image', 'Volumes', 'Elastic IP', 'SSH Key']
+      EXPANDED_HEADINGS = DEFAULT_HEADINGS + ['Image', 'Elastic IP', 'SSH Key']
 
       MACHINE_STATE_COLORS  = {
         'running'       => :green,
@@ -103,15 +103,6 @@ module Ironfan
           else
             hsh["State"] = "not exist"
           end
-
-          hsh['Volumes'] = []
-          svr.composite_volumes.each do |name, vol|
-            if    vol.ephemeral_device? then next
-            elsif vol.volume_id         then hsh['Volumes'] << vol.volume_id
-            elsif vol.create_at_launch? then hsh['Volumes'] << vol.snapshot_id
-            end
-          end
-          hsh['Volumes']    = hsh['Volumes'].join(',')
 
           hsh['Elastic IP'] = svr.cloud.public_ip if svr.cloud.public_ip
           if block_given?

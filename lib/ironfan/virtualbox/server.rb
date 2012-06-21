@@ -88,7 +88,7 @@ module Ironfan
       end
 
       def lint_fog
-        unless cloud.image_id then raise "No image ID found: nothing in Chef::Config[:virtualbox_image_info] for AZ #{self.default_availability_zone} flavor #{cloud.flavor} backing #{cloud.backing} image name #{cloud.image_name}, and cloud.image_id was not set directly. See https://github.com/infochimps-labs/ironfan/wiki/machine-image-(AMI)-lookup-by-name - #{cloud.list_images}" end
+        unless cloud.image_id then raise "No image ID found: nothing in Chef::Config[:irtualbox_image_info] for AZ #{self.default_availability_zone} flavor #{cloud.flavor} backing #{cloud.backing} image name #{cloud.image_name}, and cloud.image_id was not set directly. See https://github.com/infochimps-labs/ironfan/wiki/machine-image-(AMI)-lookup-by-name - #{cloud.list_images}" end
         unless cloud.image_id then cloud.list_flavors ; raise "No machine flavor found" ; end
       end
 
@@ -160,79 +160,6 @@ module Ironfan
       def fog_address
         address_str = self.cloud.public_ip or return
         @cloud.fog_addresses[address_str]
-      end
-
-      def block_device_mapping
-        composite_volumes.values.map(&:block_device_mapping).compact
-      end
-
-      def discover_volumes!
-        composite_volumes.each do |vol_name, vol|
-          my_vol = volumes[vol_name]
-          next if my_vol.fog_volume
-          next if Ironfan.chef_config[:cloud] == false
-          my_vol.fog_volume = cloud.fog_volumes.find do |fv|
-            ( # matches the explicit volume id
-              (vol.volume_id && (fv.id == vol.volume_id)    ) ||
-                # OR this server's machine exists, and this volume is attached to
-              # it, and in the right place
-              ( fog_server && fv.server_id && vol.device  &&
-                  (fv.server_id   == fog_server.id)         &&
-                  (fv.device.to_s == vol.device.to_s)         ) ||
-                # OR this volume is tagged as belonging to this machine
-              ( fv.tags.present?                         &&
-                  (fv.tags['server'] == self.fullname)     &&
-                  (fv.tags['device'] == vol.device.to_s) )
-            )
-          end
-          next unless my_vol.fog_volume
-          my_vol.volume_id(my_vol.fog_volume.id)                        unless my_vol.volume_id.present?
-          my_vol.availability_zone(my_vol.fog_volume.availability_zone) unless my_vol.availability_zone.present?
-          check_server_id_pairing(my_vol.fog_volume, my_vol.desc)
-        end
-      end
-
-      def attach_volumes
-        return unless in_cloud?
-        discover_volumes!
-        return if composite_volumes.empty?
-        step("  attaching volumes")
-        composite_volumes.each do |vol_name, vol|
-          next if vol.volume_id.blank? || (vol.attachable != :ebs)
-          if (not vol.in_cloud?) then  Chef::Log.debug("Volume not found: #{vol.desc}") ; next ; end
-          if (vol.has_server?)   then check_server_id_pairing(vol.fog_volume, vol.desc) ; next ; end
-          step("  - attaching #{vol.desc} -- #{vol.inspect}", :blue)
-          safely do
-            vol.fog_volume.device = vol.device
-            vol.fog_volume.server = fog_server
-          end
-        end
-      end
-
-      #
-      # This prepares a composited view of the volumes -- it shows the cluster
-      # definition overlaid by the facet definition overlaid by the server
-      # definition.
-      #
-      # This method *does* auto-vivify an empty volume declaration on the server,
-      # but doesn't modify it.
-      #
-      # This code is pretty smelly, but so is the resolve! behavior. advice welcome.
-      #
-      def composite_volumes
-        vols = {}
-        facet.volumes.each do |vol_name, vol|
-          self.volumes[vol_name] ||= Ironfan::Volume.new(:parent => self, :name => vol_name)
-          vols[vol_name]         ||= self.volumes[vol_name].dup
-          vols[vol_name].reverse_merge!(vol)
-        end
-        cluster.volumes.each do |vol_name, vol|
-          self.volumes[vol_name] ||= Ironfan::Volume.new(:parent => self, :name => vol_name)
-          vols[vol_name]         ||= self.volumes[vol_name].dup
-          vols[vol_name].reverse_merge!(vol)
-        end
-        vols.each{|vol_name, vol| vol.availability_zone self.default_availability_zone }
-        vols
       end
 
       def associate_public_ip
