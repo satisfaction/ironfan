@@ -98,12 +98,6 @@ module Ironfan
         @fog_volumes = fog_connection.volumes
       end
 
-      def fog_keypairs
-        return @fog_keypairs if @fog_keypairs
-        Chef::Log.debug("Using fog to catalog all keypairs")
-        @fog_keypairs = {}.tap{|hsh| fog_connection.key_pairs.each{|kp| hsh[kp.name] = kp } }
-      end
-
       # default values to apply where no value was set
       # @return [Hash] hash of defaults
       def defaults

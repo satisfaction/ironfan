@@ -41,6 +41,12 @@ module Ironfan
           })
       end
 
+      def fog_keypairs
+        return @fog_keypairs if @fog_keypairs
+        Chef::Log.debug("Using fog to catalog all keypairs")
+        @fog_keypairs = {}.tap{|hsh| fog_connection.key_pairs.each{|kp| hsh[kp.name] = kp } }
+      end
+
       #
       # Sets some defaults for amazon cloud usage, and registers the root volume
       #
