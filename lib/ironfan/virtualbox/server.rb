@@ -102,7 +102,6 @@ module Ironfan
         }
         p cloud
         p description
-        raise 'hell'
         description
       end
 
