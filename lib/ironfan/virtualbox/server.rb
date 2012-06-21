@@ -73,7 +73,7 @@ module Ironfan
       end
 
       def lint_fog
-        unless cloud.image_id then raise "No image ID found: nothing in Chef::Config[:irtualbox_image_info] for AZ #{self.default_availability_zone} flavor #{cloud.flavor} backing #{cloud.backing} image name #{cloud.image_name}, and cloud.image_id was not set directly. See https://github.com/infochimps-labs/ironfan/wiki/machine-image-(AMI)-lookup-by-name - #{cloud.list_images}" end
+        unless cloud.image_id then raise "No image ID found: nothing in Chef::Config[:virtualbox_image_info] for flavor #{cloud.flavor}  and image name #{cloud.image_name}, and cloud.image_id was not set directly. See https://github.com/infochimps-labs/ironfan/wiki/machine-image-(AMI)-lookup-by-name - #{cloud.list_images}" end
         unless cloud.image_id then cloud.list_flavors ; raise "No machine flavor found" ; end
       end
 
@@ -95,7 +95,6 @@ module Ironfan
             :facet              => facet_name,
             :index              => facet_index, },
           :user_data            => JSON.pretty_generate(user_data_hsh),
-          :block_device_mapping => block_device_mapping,
           :availability_zone    => default_availability_zone,
           :monitoring           => cloud.monitoring,
           # :disable_api_termination => cloud.permanent,
