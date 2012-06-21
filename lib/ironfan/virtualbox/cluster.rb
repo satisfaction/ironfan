@@ -39,7 +39,7 @@ module Ironfan
       protected
 
       def fog_servers
-        @fog_servers = @cloud.fog_servers.select{|fs| fs.name == cluster_name.to_s && (fs.status != "terminated") }
+        @fog_servers = @cloud.fog_servers.select{|fs| fs.name.split('-')[0] == cluster_name.to_s && (fs.status != "terminated") }
       end
 
     end
