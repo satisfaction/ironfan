@@ -23,8 +23,8 @@ module Ironfan
         name :vsphere
       end
 
-      def fog_connection
-        @fog_connection ||= Ironfan::IaasProvider.new
+      def self.fog_connection
+        @@fog_connection ||= Ironfan::IaasProvider.new
       end
 
       # Utility methods

@@ -39,9 +39,9 @@ module Ironfan
 
       def self.get_all
         if (@@vpc)
-          groups_list = Ironfan.fog_connection.security_groups.all({ "group-name" => "#{@@vpc}-*" })
+          groups_list = Ironfan::Ec2::Cloud.fog_connection.security_groups.all({ "group-name" => "#{@@vpc}-*" })
         else
-          groups_list = Ironfan.fog_connection.security_groups.all
+          groups_list = Ironfan::Ec2::Cloud.fog_connection.security_groups.all
         end
 
         @@all = groups_list.inject(Mash.new) do |hsh, fog_group|
@@ -59,10 +59,10 @@ module Ironfan
       def self.get_or_create(group_name, description)
         group_name = group_name.to_s.downcase
         # FIXME: the '|| cloud.fog' part is probably unnecessary
-        fog_group = all[group_name] || cloud.fog_connection.security_groups.get(group_name)
+        fog_group = all[group_name] || Ironfan::Ec2::Cloud.fog_connection.security_groups.get(group_name)
         unless fog_group
           self.step(group_name, "creating (#{description})", :green)
-          fog_group = all[group_name] = cloud.fog_connection.security_groups.new(:name => group_name, :description => description, :connection => cloud.fog_connection, :vpc_id => @@vpc)
+          fog_group = all[group_name] = Ironfan::Ec2::Cloud.fog_connection.security_groups.new(:name => group_name, :description => description, :connection => Ironfan::Ec2::Cloud.fog_connection, :vpc_id => @@vpc)
           fog_group.save
         end
         fog_group

@@ -72,8 +72,12 @@ module Ironfan
       end
 
       # Returns a connection Object which talks to various cloud providers including EC2, vSphere, OpenStack, etc.
-      def fog_connection
+      def self.fog_connection
         raise_not_implemented
+      end
+
+      def fog_connection
+        self.class.fog_connection
       end
 
       def fog_servers

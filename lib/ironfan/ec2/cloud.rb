@@ -32,8 +32,8 @@ module Ironfan
         @settings[:user_data]            ||= Mash.new
       end
 
-      def fog_connection
-        @fog_connection ||= Fog::Compute.new({
+      def self.fog_connection
+        @@fog_connection ||= Fog::Compute.new({
             :provider              => 'AWS',
             :aws_access_key_id     => Chef::Config[:knife][:aws_access_key_id],
             :aws_secret_access_key => Chef::Config[:knife][:aws_secret_access_key],
