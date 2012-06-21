@@ -85,7 +85,7 @@ class Chef
       end
 
       def display(target)
-        super(target, ["Name", "InstanceID", "State", "Flavor", "Image", "Public IP", "Private IP", "Created At"]) do |svr|
+        super(target) do |svr|
           { 'Launchable?' => (svr.launchable? ? "[blue]#{svr.launchable?}[reset]" : '-' ), }
         end
       end
