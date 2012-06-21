@@ -83,25 +83,25 @@ module Ironfan
         else                    cloud.user_data.merge({ :validation_key => cloud.validation_key }) ; end
         #
         description = {
-          :image_id             => cloud.image_id,
-          :flavor_id            => cloud.flavor,
-          :vpc_id               => cloud.vpc,
-          :subnet_id            => cloud.subnet,
-          :groups               => cloud.security_groups.keys,
-          :key_name             => cloud.keypair.to_s,
-          # Fog does not actually create tags when it creates a server.
-          :tags                 => {
-            :cluster            => cluster_name,
-            :facet              => facet_name,
-            :index              => facet_index, },
-          :user_data            => JSON.pretty_generate(user_data_hsh),
-          :availability_zone    => default_availability_zone,
-          :monitoring           => cloud.monitoring,
-          # :disable_api_termination => cloud.permanent,
-          # :instance_initiated_shutdown_behavior => instance_initiated_shutdown_behavior,
+          :name         => cloud.user_data[:node_name],
+          :os           => cloud.image_id,
+#           :image_id             => cloud.image_id,
+#           :flavor_id            => cloud.flavor,
+#           :vpc_id               => cloud.vpc,
+#           :subnet_id            => cloud.subnet,
+#           :groups               => cloud.security_groups.keys,
+#           :key_name             => cloud.keypair.to_s,
+#           # Fog does not actually create tags when it creates a server.
+#           :tags                 => {
+#             :cluster            => cluster_name,
+#             :facet              => facet_name,
+#             :index              => facet_index, },
+#           :user_data            => JSON.pretty_generate(user_data_hsh),
+#           :availability_zone    => default_availability_zone,
+#           :monitoring           => cloud.monitoring,
+#           # :disable_api_termination => cloud.permanent,
+#           # :instance_initiated_shutdown_behavior => instance_initiated_shutdown_behavior,
         }
-        p cloud
-        p description
         description
       end
 
