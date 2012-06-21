@@ -13,7 +13,7 @@
 #   limitations under the License.
 #
 
-require 'ironfan/monitor'
+require 'ironfan/vsphere/monitor'
 
 module Ironfan
   module Vsphere
