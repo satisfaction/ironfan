@@ -172,35 +172,11 @@ module Ironfan
       #
       Chef::Config[:virtualbox_image_info] ||= {}
       Chef::Config[:virtualbox_image_info].merge!({
-          #
-          # Lucid (Ubuntu 9.10)
-          #
-          %w[64-bit karmic   ] => { :image_id => 'ami-55739e3c', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-          %w[32-bit karmic   ] => { :image_id => 'ami-bb709dd2', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-
-          #
-          # Lucid (Ubuntu 10.04.3)
-          #
-          %w[64-bit lucid    ] => { :image_id => 'ami-77f28d25', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-          %w[32-bit lucid    ] => { :image_id => 'ami-4df28d1f', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-
-          #
-          # Maverick (Ubuntu 10.10)
-          #
-          %w[64-bit maverick ] => { :image_id => 'ami-32423c60', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-          %w[32-bit maverick ] => { :image_id => 'ami-0c423c5e', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-
-          #
-          # Natty (Ubuntu 11.04)
-          #
-          %w[32-bit natty    ] => { :image_id => 'ami-00b10501', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-          %w[64-bit natty    ] => { :image_id => 'ami-f0b004f1', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-
-          #
-          # Oneiric (Ubuntu 11.10)
-          #
-          %w[32-bit oneiric  ] => { :image_id => 'ami-84902785', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
-          %w[64-bit oneiric  ] => { :image_id => 'ami-88902789', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+          %w[64-bit karmic   ] => { :image_id => 'Ubuntu_64', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+          %w[64-bit lucid    ] => { :image_id => 'Ubuntu_64', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+          %w[64-bit maverick ] => { :image_id => 'Ubuntu_64', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+          %w[64-bit natty    ] => { :image_id => 'Ubuntu_64', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
+          %w[64-bit oneiric  ] => { :image_id => 'Ubuntu_64', :ssh_user => 'ubuntu', :bootstrap_distro => "ubuntu10.04-gems", },
         })
     end
   end
