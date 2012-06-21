@@ -51,6 +51,20 @@ module Ironfan
         super
       end
 
+      # FIXME: this is a jumble. we need to pass it in some other way.
+      MINIMAL_HEADINGS  = ["Name", "Chef?", "State", "InstanceID", "Public IP", "Private IP", "Created At"].to_set.freeze
+      DEFAULT_HEADINGS  = (MINIMAL_HEADINGS + ['Flavor', 'AZ', 'Env']).freeze
+      EXPANDED_HEADINGS = DEFAULT_HEADINGS + ['Image', 'Volumes', 'Elastic IP', 'SSH Key']
+
+      MACHINE_STATE_COLORS  = {
+        'running'       => :green,
+        'pending'       => :yellow,
+        'stopping'      => :magenta,
+        'shutting-down' => :magenta,
+        'stopped'       => :cyan,
+        'terminated'    => :blue,
+        'not running'   => :blue,
+      }
       def display hh = :default
         headings =
           case hh
