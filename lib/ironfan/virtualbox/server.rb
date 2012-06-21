@@ -21,7 +21,7 @@ module Ironfan
       # Override VM attributes methods defined in base class
       #
       def created?
-        in_cloud? && (not ['terminated', 'shutting-down'].include?(fog_server.state))
+        in_cloud? && (not ['terminated', 'shutting-down'].include?(fog_server.status))
       end
 
       def running?
@@ -29,7 +29,7 @@ module Ironfan
       end
 
       def startable?
-        has_cloud_state?('stopped')
+        has_cloud_state?('powered_off')
       end
 
       # FIXME -- this will break on some edge case where a bogus node is
@@ -56,6 +56,10 @@ module Ironfan
         return unless created?
         step("  labeling servers")
         fog_create_tags(fog_server, self.fullname, tags)
+      end
+
+      def has_cloud_state?(*states)
+        in_cloud? && states.flatten.include?(fog_server.status.to_s)
       end
 
       #

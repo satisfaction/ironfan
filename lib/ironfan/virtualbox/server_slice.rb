@@ -17,39 +17,9 @@ module Ironfan
   module VirtualBox
     class ServerSlice < Ironfan::ServerSlice
 
-      # Return security groups
-      def security_groups
-        sg = {}
-        servers.each{|svr| sg.merge!(svr.cloud.security_groups) }
-        sg
-      end
-
-      # Create security keypairs
-      def sync_keypairs
-        step("ensuring keypairs exist")
-        keypairs  = servers.map{|svr| [svr.cluster.cloud.keypair, svr.cloud.keypair] }.flatten.map(&:to_s).reject(&:blank?).uniq
-        keypairs  = keypairs - cloud.fog_keypairs.keys
-        keypairs.each do |keypair_name|
-          keypair_obj = Ironfan::VirtualBoxKeypair.create!(keypair_name)
-          cloud.fog_keypairs[keypair_name] = keypair_obj
-        end
-      end
-
-      # Create security groups, their dependencies, and synchronize their permissions
-      def sync_security_groups
-        step("ensuring security groups exist and are correct")
-        security_groups.each{|name,group| group.run }
-      end
-
       #
       # Override VM actions methods defined in parent class
       #
-
-      def sync_to_cloud
-        sync_keypairs
-        sync_security_groups
-        super
-      end
 
       # FIXME: this is a jumble. we need to pass it in some other way.
       MINIMAL_HEADINGS  = ["Name", "Chef?", "State", "InstanceID", "Public IP", "Created At"].to_set.freeze
@@ -91,11 +61,9 @@ module Ironfan
           if (fs = svr.fog_server)
             hsh.merge!(
               "InstanceID" => (fs.id && fs.id.length > 0) ? fs.id : "???",
-              "Image"      => fs.image_id,
-              "SSH Key"    => fs.key_name,
-              "State"      => "[#{MACHINE_STATE_COLORS[fs.state] || 'white'}]#{fs.state}[reset]",
+              "OS Type"    => fs.os,
+              "State"      => "[#{MACHINE_STATE_COLORS[fs.status] || 'white'}]#{fs.status}[reset]",
               "Public IP"  => fs.public_ip_address,
-              "Created At" => fs.created_at ? fs.created_at.strftime("%Y%m%d-%H%M%S") : nil
             )
           else
             hsh["State"] = "not exist"
