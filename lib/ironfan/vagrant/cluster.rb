@@ -14,8 +14,6 @@
 #
 
 require 'ironfan/vagrant/facet'
-require 'ironfan/vagrant/role_implications' # make roles trigger other actions (security groups, etc)
-require 'ironfan/vagrant/security_group'
 require 'ironfan/vagrant/server'
 require 'ironfan/vagrant/server_slice'
 
@@ -46,17 +44,6 @@ module Ironfan
 
       def discover_addresses!
         servers.each(&:discover_addresses!)
-      end
-
-      def after_cloud_created(attrs)
-        create_cluster_security_group unless attrs[:no_security_group]
-      end
-
-      # Create a security group named for the cluster
-      # which is friends with everything in the cluster
-      def create_cluster_security_group
-        clname = self.name # put it in scope
-        cloud.security_group(clname){ authorize_group(clname) }
       end
 
       protected
