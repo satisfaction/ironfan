@@ -100,28 +100,10 @@ module Ironfan
           # :disable_api_termination => cloud.permanent,
           # :instance_initiated_shutdown_behavior => instance_initiated_shutdown_behavior,
         }
-        if needs_placement_group?
-          ui.warn "1.3.1 and earlier versions of Fog don't correctly support placement groups, so your nodes will land willy-nilly. We're working on a fix"
-          description[:placement] = { 'groupName' => cloud.placement_group.to_s }
-        end
+        p cloud
+        p description
+        raise 'hell'
         description
-      end
-
-      def ensure_placement_group
-        return unless needs_placement_group?
-        pg_name = cloud.placement_group.to_s
-        desc = "placement group #{pg_name} for #{self.fullname} (vs #{Ironfan.placement_groups.inspect}"
-        return if Ironfan.placement_groups.include?(pg_name)
-        safely do
-          step("  creating #{desc}", :blue)
-          unless_dry_run{ Ironfan.fog_connection.create_placement_group(pg_name, 'cluster') }
-          Ironfan.placement_groups[pg_name] = { 'groupName' => pg_name, 'strategy' => 'cluster' }
-        end
-        pg_name
-      end
-
-      def needs_placement_group?
-        cloud.flavor_info[:placement_groupable]
       end
 
       #
