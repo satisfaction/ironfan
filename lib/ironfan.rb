@@ -140,10 +140,10 @@ module Ironfan
   def self.create_cluster(cluster_def_file, overwrite = false)
     raise ArgumentError, "Please supply a cluster definition file" if cluster_def_file.to_s.empty?
     
-    json_file = File.read(cluster_def_file)
+    json_file = JSON.parse(File.read(cluster_def_file))
 
     # get cluster definition from json file
-    cluster_def = JSON.parse(json_file)['cluster_definition']
+    cluster_def = json_file['cluster_definition']
     cluster_name = cluster_def['name']
     die("'name' of cluster is not specified in #{cluster_def_file}") if !cluster_name
 
@@ -154,11 +154,11 @@ module Ironfan
     end
 
     # create new Cluster object
-    cloud_provider_def = JSON.parse(json_file)['cloud_provider']
+    cloud_provider_def = json_file['cloud_provider']
     cloud_provider_name = cloud_provider_def['name'].to_sym
     cluster = Ironfan.cluster(cluster_name, :provider => cloud_provider_name)
     cluster.cloud cloud_provider_name
-    cluster.cloud.flavor 'default' # FIXME: should not be hard coded in future
+    cluster.cloud.flavor = json_file['cloud_flavor']
 
     cluster_def.each do |key, value|
       case key
