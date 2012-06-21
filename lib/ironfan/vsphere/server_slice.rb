@@ -18,7 +18,7 @@ require 'ironfan/vsphere/monitor'
 module Ironfan
   module Vsphere
     class ServerSlice < Ironfan::ServerSlice
-      include Ironfan::Monitor
+      include Ironfan::Vsphere::Monitor
 
       #
       # Override VM actions methods defined in base class
