@@ -242,12 +242,12 @@ module Ironfan
       case provider
       when :ec2
         Ironfan::Ec2::Cluster.new(name, attrs)
-      when :vagrant
-        Ironfan::Vagrant::Cluster.new(name, attrs)
+      when :virtualbox
+        Ironfan::VirtualBox::Cluster.new(name, attrs)
       when :vsphere
         Ironfan::Vsphere::Cluster.new(name, attrs)
       else
-        raise "Unknown cloud provider #{provider.inspect}. Only supports :ec2, :vagrant, and :vsphere so far."
+        raise "Unknown cloud provider #{provider.inspect}. Only supports :ec2, :virtualbox, and :vsphere so far."
       end
 
     cluster

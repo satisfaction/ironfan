@@ -60,12 +60,12 @@ module Ironfan
       case cloud_provider
         when :ec2
           @cloud ||= Ironfan::Ec2::Cloud.new(self)
-        when :vagrant
-          @cloud ||= Ironfan::Vagrant::Cloud.new(self)
+        when :virtualbox
+          @cloud ||= Ironfan::VirtualBox::Cloud.new(self)
         when :vsphere
           @cloud ||= Ironfan::Vsphere::Cloud.new(self)
         else
-          raise "Unknown cloud provider #{cloud_provider.inspect}. Only supports :ec2, :vagrant, and :vsphere so far."
+          raise "Unknown cloud provider #{cloud_provider.inspect}. Only supports :ec2, :virtualbox, and :vsphere so far."
       end
       @cloud.configure(hsh, &block) if block
       after_cloud_created(hsh)
@@ -81,9 +81,9 @@ module Ironfan
       cloud(:ec2, attrs, &block)
     end
 
-    # sugar for cloud(:vagrant)
-    def vagrant(attrs={}, &block)
-      cloud(:vagrant, attrs, &block)
+    # sugar for cloud(:virtualbox)
+    def virtualbox(attrs={}, &block)
+      cloud(:virtualbox, attrs, &block)
     end
 
     # sugar for cloud(:vsphere)

@@ -18,17 +18,17 @@ require 'ironfan/virtualbox/server'
 require 'ironfan/virtualbox/server_slice'
 
 module Ironfan
-  module Vagrant
+  module VirtualBox
 
     class Cluster < Ironfan::Cluster
 
       def initialize(*args)
-        super(:vagrant, *args)
+        super(:virtualbox, *args)
       end
 
       def new_facet(*args)
-        f = Ironfan::Vagrant::Facet.new(*args)
-        f.cloud(:vagrant)   # set the cloud provider, or later bare cloud calls will fail
+        f = Ironfan::VirtualBox::Facet.new(*args)
+        f.cloud(:virtualbox)   # set the cloud provider, or later bare cloud calls will fail
         f
       end
 

@@ -14,7 +14,7 @@
 #
 
 module Ironfan
-  module Vagrant
+  module VirtualBox
     class Facet < Ironfan::Facet
 
       def initialize(*args)
@@ -22,11 +22,11 @@ module Ironfan
       end
 
       def new_server(*args)
-        Ironfan::Vagrant::Server.new(*args)
+        Ironfan::VirtualBox::Server.new(*args)
       end
 
       def slice(slice_indexes=nil)
-        super(slice_indexes,Ironfan::Vagrant::ServerSlice)
+        super(slice_indexes,Ironfan::VirtualBox::ServerSlice)
       end
 
       ## Removed calls that appear to depend on descending from Ironfan::Cluster

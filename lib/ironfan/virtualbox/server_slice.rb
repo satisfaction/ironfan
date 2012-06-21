@@ -14,7 +14,7 @@
 #
 
 module Ironfan
-  module Vagrant
+  module VirtualBox
     class ServerSlice < Ironfan::ServerSlice
 
       # Return security groups
@@ -30,7 +30,7 @@ module Ironfan
         keypairs  = servers.map{|svr| [svr.cluster.cloud.keypair, svr.cloud.keypair] }.flatten.map(&:to_s).reject(&:blank?).uniq
         keypairs  = keypairs - cloud.fog_keypairs.keys
         keypairs.each do |keypair_name|
-          keypair_obj = Ironfan::VagrantKeypair.create!(keypair_name)
+          keypair_obj = Ironfan::VirtualBoxKeypair.create!(keypair_name)
           cloud.fog_keypairs[keypair_name] = keypair_obj
         end
       end

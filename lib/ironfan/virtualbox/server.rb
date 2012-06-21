@@ -14,7 +14,7 @@
 #
 
 module Ironfan
-  module Vagrant
+  module VirtualBox
     class Server < Ironfan::Server
 
       #
@@ -88,7 +88,7 @@ module Ironfan
       end
 
       def lint_fog
-        unless cloud.image_id then raise "No image ID found: nothing in Chef::Config[:vagrant_image_info] for AZ #{self.default_availability_zone} flavor #{cloud.flavor} backing #{cloud.backing} image name #{cloud.image_name}, and cloud.image_id was not set directly. See https://github.com/infochimps-labs/ironfan/wiki/machine-image-(AMI)-lookup-by-name - #{cloud.list_images}" end
+        unless cloud.image_id then raise "No image ID found: nothing in Chef::Config[:virtualbox_image_info] for AZ #{self.default_availability_zone} flavor #{cloud.flavor} backing #{cloud.backing} image name #{cloud.image_name}, and cloud.image_id was not set directly. See https://github.com/infochimps-labs/ironfan/wiki/machine-image-(AMI)-lookup-by-name - #{cloud.list_images}" end
         unless cloud.image_id then cloud.list_flavors ; raise "No machine flavor found" ; end
       end
 

@@ -16,7 +16,7 @@
 require 'ironfan/cloud'
 
 module Ironfan
-  module Vagrant
+  module VirtualBox
     class Cloud < Ironfan::Cloud::Base
       has_keys(
         :region, :availability_zones, :backing,
@@ -27,7 +27,7 @@ module Ironfan
 
       def initialize(*args)
         super *args
-        name :vagrant # cloud provider name
+        name :virtualbox # cloud provider name
         @settings[:security_groups]      ||= Mash.new
         @settings[:user_data]            ||= Mash.new
       end
@@ -107,12 +107,12 @@ module Ironfan
       # Utility methods
 
       def image_info
-        Chef::Config[:vagrant_image_info][ [region, bits, backing, image_name] ] or ( ui.warn "Make sure to define the machine's region, bits, backing and image_name. (Have #{[region, bits, backing, image_name].inspect})" ; {} )
+        Chef::Config[:virtualbox_image_info][ [region, bits, backing, image_name] ] or ( ui.warn "Make sure to define the machine's region, bits, backing and image_name. (Have #{[region, bits, backing, image_name].inspect})" ; {} )
       end
 
       def list_images
         ui.info("Available images:")
-        Chef::Config[:vagrant_image_info].each do |flavor_name, flavor|
+        Chef::Config[:virtualbox_image_info].each do |flavor_name, flavor|
           ui.info("  #{flavor_name}\t#{flavor.inspect}")
         end
       end
@@ -174,15 +174,15 @@ module Ironfan
       #
       # To add to this list, use this snippet:
       #
-      #     Chef::Config[:vagrant_image_info] ||= {}
-      #     Chef::Config[:vagrant_image_info].merge!({
+      #     Chef::Config[:virtualbox_image_info] ||= {}
+      #     Chef::Config[:virtualbox_image_info].merge!({
       #       # ... lines like the below
       #     })
       #
       # in your knife.rb or whereever. We'll notice that it exists and add to it, rather than clobbering it.
       #
-      Chef::Config[:vagrant_image_info] ||= {}
-      Chef::Config[:vagrant_image_info].merge!({
+      Chef::Config[:virtualbox_image_info] ||= {}
+      Chef::Config[:virtualbox_image_info].merge!({
 
           #
           # Lucid (Ubuntu 9.10)
