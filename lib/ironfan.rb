@@ -39,7 +39,7 @@ require 'ironfan/deprecated'        # stuff slated to go away
 #
 # include cloud providers
 require 'ironfan/ec2/cluster'
-require 'ironfan/vagrant/cluster'
+require 'ironfan/virtualbox/cluster'
 require 'ironfan/vsphere/cluster'
 
 module Ironfan

@@ -13,9 +13,9 @@
 #   limitations under the License.
 #
 
-require 'ironfan/vagrant/facet'
-require 'ironfan/vagrant/server'
-require 'ironfan/vagrant/server_slice'
+require 'ironfan/virtualbox/facet'
+require 'ironfan/virtualbox/server'
+require 'ironfan/virtualbox/server_slice'
 
 module Ironfan
   module Vagrant

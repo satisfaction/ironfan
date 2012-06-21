@@ -15,7 +15,7 @@
 
 # include cloud providers
 require 'ironfan/ec2/cloud'
-require 'ironfan/vagrant/cloud'
+require 'ironfan/virtualbox/cloud'
 require 'ironfan/vsphere/cloud'
 
 module Ironfan
