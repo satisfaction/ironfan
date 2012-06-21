@@ -24,7 +24,6 @@ require 'set'
 #
 require 'ironfan/dsl_object'
 require 'ironfan/cloud'
-require 'ironfan/security_group'
 require 'ironfan/compute'           # base class for machine attributes
 require 'ironfan/facet'             # similar machines within a cluster
 require 'ironfan/cluster'           # group of machines with a common mission
@@ -33,7 +32,6 @@ require 'ironfan/discovery'         # pair servers with Fog and Chef objects
 require 'ironfan/server_slice'      # collection of server objects
 require 'ironfan/volume'            # configure external and internal volumes
 require 'ironfan/private_key'       # coordinate chef keys, cloud keypairs, etc
-require 'ironfan/role_implications' # make roles trigger other actions (security groups, etc)
 #
 require 'ironfan/chef_layer'        # interface to chef for server actions
 #

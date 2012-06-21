@@ -1,5 +1,5 @@
 module Ironfan
-  module Cloud
+  module Ec2
     class SecurityGroup < DslObject
       has_keys :name, :description, :owner_id, :group_id
       attr_reader :group_authorizations

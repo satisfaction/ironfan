@@ -61,7 +61,7 @@ module Ironfan
       # adds a security group to the cloud instance
       def security_group(sg_name, hsh={}, &block)
         sg_name = sg_name.to_s
-        security_groups[sg_name] ||= Ironfan::Cloud::SecurityGroup.new(self, sg_name)
+        security_groups[sg_name] ||= Ironfan::Ec2::SecurityGroup.new(self, sg_name)
         security_groups[sg_name].configure(hsh, &block)
         security_groups[sg_name]
       end
