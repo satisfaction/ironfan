@@ -43,17 +43,8 @@ module Ironfan
       #
       def sync_to_cloud
         step "Syncing to cloud"
-        attach_volumes
         create_tags
         associate_public_ip
-      end
-
-      def sync_volume_attributes
-        super
-        composite_volumes.each do |vol_name, vol|
-          chef_node.normal[:volumes] ||= Mash.new
-          chef_node.normal[:volumes][vol_name] = vol.to_mash.compact
-        end
       end
 
       def create_server
@@ -63,14 +54,8 @@ module Ironfan
 
       def create_tags
         return unless created?
-        step("  labeling servers and volumes")
+        step("  labeling servers")
         fog_create_tags(fog_server, self.fullname, tags)
-        composite_volumes.each do |vol_name, vol|
-          if vol.fog_volume
-            fog_create_tags(vol.fog_volume, vol.desc,
-              { "server" => self.fullname, "name" => "#{name}-#{vol.name}", "device" => vol.device, "mount_point" => vol.mount_point, "cluster" => cluster_name, "facet"   => facet_name, "index"   => facet_index, })
-          end
-        end
       end
 
       #
