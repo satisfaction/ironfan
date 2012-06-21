@@ -111,10 +111,11 @@ module Ironfan
       # Otherwise, try to get to it through mapping the aws instance id
       # to the chef node name found in the chef node
       fog_servers.each do |fs|
-        if fs.tags && fs.tags["cluster"] && fs.tags["facet"] && fs.tags["index"] && fs.tags["cluster"] == cluster_name.to_s
-          svr = Ironfan::Server.get(fs.tags["cluster"], fs.tags["facet"], fs.tags["index"])
-        elsif fs.name.start_with?(cluster_name.to_s + '-')
-          svr = Ironfan::Server.get_by_name(fs.name)
+        name = fs.tags["name"] if fs.respond_to? :tags
+        name ||= fs.name if fs.respond_to? :name
+
+        if name.start_with?(cluster_name.to_s + '-')
+          svr = Ironfan::Server.get_by_name(name)
         elsif @aws_instance_hash[fs.id]
           svr = @aws_instance_hash[fs.id]
         else
