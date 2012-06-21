@@ -27,7 +27,9 @@ module Ironfan
       end
 
       def new_facet(*args)
-        Ironfan::Ec2::Facet.new(*args)
+        f = Ironfan::Ec2::Facet.new(*args)
+        f.cloud(:ec2)   # set the cloud provider, or later bare cloud calls will fail
+        f
       end
 
       def discover!
