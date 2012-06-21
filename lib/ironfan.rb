@@ -156,7 +156,7 @@ module Ironfan
     # create new Cluster object
     cloud_provider_def = JSON.parse(json_file)['cloud_provider']
     cloud_provider_name = cloud_provider_def['name'].to_sym
-    cluster = Ironfan.cluster(cloud_provider_name, cluster_name)
+    cluster = Ironfan.cluster(cluster_name, :provider => cloud_provider_name)
     cluster.cloud cloud_provider_name
     cluster.cloud.flavor 'default' # FIXME: should not be hard coded in future
 

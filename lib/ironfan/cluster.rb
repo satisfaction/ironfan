@@ -122,7 +122,7 @@ module Ironfan
     #
     def render()
       @@CLUSTER_TEMPLATE ||= %q{
-Ironfan.cluster <%= @cluster.provider.inspect %>, <%= @cluster.name.to_s.inspect %> do
+Ironfan.cluster <%= @cluster.name.to_s.inspect %>, :provider => <%= @cluster.provider.inspect %> do
 
   hadoop_distro <%= @cluster.hadoop_distro.inspect %>
 
