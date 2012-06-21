@@ -14,10 +14,11 @@
 #
 
 require 'ironfan/ec2/facet'
-require 'ironfan/ec2/role_implications' # make roles trigger other actions (security groups, etc)
 require 'ironfan/ec2/security_group'
 require 'ironfan/ec2/server'
 require 'ironfan/ec2/server_slice'
+
+require 'ironfan/ec2/role_implications' # make roles trigger other actions (security groups, etc)
 
 module Ironfan
   module Ec2

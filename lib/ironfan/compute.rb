@@ -25,7 +25,6 @@ module Ironfan
   class ComputeBuilder < Ironfan::DslObject
     attr_reader :cloud, :volumes, :chef_roles
     has_keys :name, :bogosity, :environment
-    @@role_implications ||= Mash.new
     @@run_list_rank     ||= 0
 
     def initialize(builder_name, attrs={})
@@ -127,11 +126,6 @@ module Ironfan
       volume(:root, attrs, &block)
     end
 
-    #
-    # Adds the given role to the run list, and invokes any role_implications it
-    # implies (for instance, defining and applying the 'ssh' security group if
-    # the 'ssh' role is applied.)
-    #
     # You can specify placement of `:first`, `:normal` (or nil) or `:last`; the
     # final runlist is assembled as
     #
@@ -143,9 +137,9 @@ module Ironfan
     #
     def role(role_name, placement=nil)
       add_to_run_list("role[#{role_name}]", placement)
-      self.instance_eval(&@@role_implications[role_name]) if @@role_implications[role_name]
     end
 
+    #
     # Add the given recipe to the run list. You can specify placement of
     # `:first`, `:normal` (or nil) or `:last`; the final runlist is assembled as
     #
@@ -170,18 +164,6 @@ module Ironfan
     # run list elements grouped into :first, :normal and :last
     def run_list_groups
       @run_list_info.keys.sort_by{|item| @run_list_info[item][:rank] }.group_by{|item| @run_list_info[item][:placement] }
-    end
-
-    #
-    # Some roles imply aspects of the machine that have to exist at creation.
-    # For instance, on an ec2 machine you may wish the 'ssh' role to imply a
-    # security group explicity opening port 22.
-    #
-    # @param [String] role_name -- the role that triggers the block
-    # @yield block will be instance_eval'd in the object that calls 'role'
-    #
-    def self.role_implication(name, &block)
-      @@role_implications[name] = block
     end
 
   protected

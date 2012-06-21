@@ -16,6 +16,7 @@
 module Ironfan
   module Ec2
     class Server < Ironfan::Server
+      @@role_implications ||= Mash.new
 
       #
       # Override VM attributes methods defined in base class
@@ -31,6 +32,26 @@ module Ironfan
       def startable?
         has_cloud_state?('stopped')
       end
+
+      #
+      # Some roles imply aspects of the machine that have to exist at creation.
+      # For instance, on an ec2 machine you may wish the 'ssh' role to imply a
+      # security group explicity opening port 22.
+      #
+      # @param [String] role_name -- the role that triggers the block
+      # @yield block will be instance_eval'd in the object that calls 'role'
+      #
+      def role(role_name, placement=nil)
+        super(*args)
+        p @@role_implications
+        raise 'the roof'
+        self.instance_eval(&@@role_implications[role_name]) if @@role_implications[role_name]
+      end
+
+      def self.role_implication(name, &block)
+        @@role_implications[name] = block
+      end
+
 
       # FIXME -- this will break on some edge case where a bogus node is
       # discovered after everything is resolved!
