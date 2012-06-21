@@ -25,6 +25,10 @@ module Ironfan
         Ironfan::Ec2::Server.new(*args)
       end
 
+      def slice(slice_indexes=nil)
+        super(slice_indexes,Ironfan::Ec2::ServerSlice)
+      end
+
       ## Removed calls that appear to depend on descending from Ironfan::Cluster
       # def after_cloud_created(attrs)
       #   create_facet_security_group unless attrs[:no_security_group]

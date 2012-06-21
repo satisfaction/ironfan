@@ -26,6 +26,10 @@ module Ironfan
         Ironfan::Vsphere::Server.new(*args)
       end
 
+      def slice(slice_indexes=nil)
+        super(slice_indexes,Ironfan::Vsphere::ServerSlice)
+      end
+
     end
 
   end

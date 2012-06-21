@@ -98,11 +98,11 @@ module Ironfan
     # @param [Array, String] slice_indexes -- servers in that facet (or nil for all in facet).
     #
     # @return [Ironfan::ServerSlice] the requested slice
-    def slice(slice_indexes=nil)
+    def slice(slice_indexes=nil,subclass=Ironfan::ServerSlice)
       slice_indexes = self.indexes if slice_indexes.blank?
       slice_indexes = indexes_from_intervals(slice_indexes) if slice_indexes.is_a?(String)
       svrs = Array(slice_indexes).map(&:to_i).sort!.select{|idx| has_server?(idx) }.map{|idx| server(idx) }
-      Ironfan::ServerSlice.new(self.cluster, svrs)
+      subclass.new(self.cluster, svrs)
     end
 
     # all valid server indexes
