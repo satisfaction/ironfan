@@ -93,7 +93,7 @@ module Ironfan
       end
 
       def fog_volumes
-        return @fog_volumes if @fog_addresses
+        return @fog_volumes if @fog_volumes
         Chef::Log.debug("Using fog to catalog all volumes")
         @fog_volumes = fog_connection.volumes
       end
