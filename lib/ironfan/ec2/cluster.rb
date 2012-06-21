@@ -49,6 +49,10 @@ module Ironfan
         servers.each(&:discover_addresses!)
       end
 
+      def servers
+        super(Ironfan::Ec2::ServerSlice)
+      end
+
       def after_cloud_created(attrs)
         create_cluster_security_group unless attrs[:no_security_group]
       end

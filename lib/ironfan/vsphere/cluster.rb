@@ -31,8 +31,7 @@ module Ironfan
       end
 
       def servers
-        svrs = @facets.map{ |name, facet| facet.servers.to_a }
-        Ironfan::Vsphere::ServerSlice.new(self, svrs.flatten)
+        super(Ironfan::Vsphere::ServerSlice)
       end
 
     end

@@ -83,9 +83,9 @@ module Ironfan
     # All servers in this facet, sorted by facet name and index
     #
     # @return [Ironfan::ServerSlice] slice containing all servers
-    def servers
+    def servers(subclass=Ironfan::ServerSlice)
       svrs = @facets.map{ |name, facet| facet.servers.to_a }
-      Ironfan::ServerSlice.new(self, svrs.flatten)
+      subclass.new(self, svrs.flatten)
     end
 
     #

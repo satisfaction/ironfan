@@ -36,6 +36,10 @@ module Ironfan
         servers.each(&:discover_addresses!)
       end
 
+      def servers
+        super(Ironfan::VirtualBox::ServerSlice)
+      end
+
       protected
 
       def fog_servers
