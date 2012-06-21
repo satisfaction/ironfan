@@ -43,6 +43,11 @@ module Ironfan
       :description => "Specify the file containing the cluster definition in json format. And specify --yes to overwrite existing cluster file.",
       :required    => false
 
+    option :vsphere,
+      :long        => "--vsphere",
+      :description => "Load the vSphere specific enhancements (IaaSBroker and Monitor services)",
+      :required    => false
+
     def run
       load_ironfan
       die(banner) if @name_args.empty?
