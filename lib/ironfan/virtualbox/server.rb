@@ -43,7 +43,6 @@ module Ironfan
       #
       def sync_to_cloud
         step "Syncing to cloud"
-        create_tags
         associate_public_ip
       end
 
@@ -107,23 +106,6 @@ module Ironfan
 #           # :instance_initiated_shutdown_behavior => instance_initiated_shutdown_behavior,
         }
         description
-      end
-
-      #
-      # Takes key-value pairs and idempotently sets those tags on the cloud machine
-      #
-      def fog_create_tags(fog_obj, desc, tags)
-        tags['Name'] ||= tags['name'] if tags.has_key?('name')
-        tags_to_create = tags.reject{|key, val| fog_obj.tags[key] == val.to_s }
-        return if tags_to_create.empty?
-        step("  tagging #{desc} with #{tags_to_create.inspect}", :green)
-        tags_to_create.each do |key, value|
-          Chef::Log.debug( "tagging #{desc} with #{key} = #{value}" )
-          safely do
-            @cloud.fog_connection.tags.create({
-                :key => key, :value => value.to_s, :resource_id => fog_obj.id })
-          end
-        end
       end
 
       def fog_address
