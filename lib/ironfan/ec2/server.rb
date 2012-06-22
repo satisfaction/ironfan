@@ -43,8 +43,6 @@ module Ironfan
       #
       def role(role_name, placement=nil)
         super(*args)
-        p @@role_implications
-        raise 'the roof'
         self.instance_eval(&@@role_implications[role_name]) if @@role_implications[role_name]
       end
 
