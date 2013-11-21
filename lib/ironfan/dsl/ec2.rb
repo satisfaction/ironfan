@@ -331,16 +331,21 @@ Chef::Config[:ec2_flavor_info].merge!({
     #
     'm1.large'    => { :price => 0.32,  :bits => 64, :ram =>   7680, :cores => 2, :core_size => 2,    :inst_disks => 2, :inst_disk_size =>  850, :ephemeral_volumes => 2, :ebs_optimizable =>  500, },
     'm2.xlarge'   => { :price => 0.45,  :bits => 64, :ram =>  18124, :cores => 2, :core_size => 3.25, :inst_disks => 1, :inst_disk_size =>  420, :ephemeral_volumes => 1, },
-    'm3.xlarge'   => { :price => 0.50,  :bits => 64, :ram =>  15360, :cores => 4, :core_size => 3.25, :inst_disks => 0, :inst_disk_size =>  0,   :ephemeral_volumes => 0, :ebs_optimizable =>  500, },
+    'm3.xlarge'   => { :price => 0.45,  :bits => 64, :ram =>  15360, :cores => 4, :core_size => 3.25, :inst_disks => 0, :inst_disk_size =>  0,   :ephemeral_volumes => 0, :ebs_optimizable =>  500, },
     'c1.xlarge'   => { :price => 0.64,  :bits => 64, :ram =>   7168, :cores => 8, :core_size => 2.5,  :inst_disks => 4, :inst_disk_size => 1690, :ephemeral_volumes => 4, :ebs_optimizable => 1000, },
     'm1.xlarge'   => { :price => 0.66,  :bits => 64, :ram =>  15360, :cores => 4, :core_size => 2,    :inst_disks => 4, :inst_disk_size => 1690, :ephemeral_volumes => 4, :ebs_optimizable => 1000, },
-    'm3.2xlarge'  => { :price => 1.00,  :bits => 64, :ram =>  30720, :cores => 8, :core_size => 3.25, :inst_disks => 0, :inst_disk_size =>  0,   :ephemeral_volumes => 0, :ebs_optimizable => 1000, },
+    'm3.2xlarge'  => { :price => 0.90,  :bits => 64, :ram =>  30720, :cores => 8, :core_size => 3.25, :inst_disks => 0, :inst_disk_size =>  0,   :ephemeral_volumes => 0, :ebs_optimizable => 1000, },
     'm2.2xlarge'  => { :price => 0.90,  :bits => 64, :ram =>  35020, :cores => 4, :core_size => 3.25, :inst_disks => 2, :inst_disk_size =>  850, :ephemeral_volumes => 2, :ebs_optimizable =>  500, },
     'm2.4xlarge'  => { :price => 1.80,  :bits => 64, :ram =>  70041, :cores => 8, :core_size => 3.25, :inst_disks => 4, :inst_disk_size => 1690, :ephemeral_volumes => 4, :ebs_optimizable => 1000, },
     'cc1.4xlarge' => { :price => 1.30,  :bits => 64, :ram =>  23552, :cores => 8, :core_size => 4.19, :inst_disks => 4, :inst_disk_size => 1690, :ephemeral_volumes => 2, :placement_groupable => true, :virtualization => 'hvm' },
     'cc1.8xlarge' => { :price => 2.40,  :bits => 64, :ram =>  61952, :cores =>16, :core_size => 5.50, :inst_disks => 8, :inst_disk_size => 3370, :ephemeral_volumes => 4, :placement_groupable => true, :virtualization => 'hvm' },
-    'cc2.8xlarge' => { :price => 2.40,  :bits => 64, :ram =>  61952, :cores =>16, :core_size => 5.50, :inst_disks => 8, :inst_disk_size => 3370, :ephemeral_volumes => 4, :placement_groupable => true, :virtualization => 'hvm' },
+    'cc2.8xlarge' => { :price => 2.40,  :bits => 64, :ram =>  61952, :cores =>32, :core_size => 5.50, :inst_disks => 8, :inst_disk_size => 3370, :ephemeral_volumes => 4, :placement_groupable => true, :virtualization => 'hvm' },
     'cg1.4xlarge' => { :price => 2.10,  :bits => 64, :ram =>  22528, :cores => 8, :core_size => 4.19, :inst_disks => 4, :inst_disk_size => 1690, :ephemeral_volumes => 2, :placement_groupable => true, :virtualization => 'hvm' },
+    'c3.large'    =>  { :price => 0.15, :bits => 64, :ram =>   3840, :cores => 2, :core_size => 6.00, :inst_disks => 0, :inst_disk_size =>    0, :ephemeral_volumes => 0, :placement_groupable => true, :virtualization => 'hvm', :ebs_opizable => 10000 },
+    'c3.xlarge'   =>  { :price => 0.30, :bits => 64, :ram =>   7168, :cores => 4, :core_size => 6.00, :inst_disks => 0, :inst_disk_size =>    0, :ephemeral_volumes => 0, :placement_groupable => true, :virtualization => 'hvm', :ebs_opizable => 10000 },
+    'c3.2xlarge'  =>  { :price => 0.60, :bits => 64, :ram =>  15360, :cores => 8, :core_size => 6.00, :inst_disks => 0, :inst_disk_size =>    0, :ephemeral_volumes => 0, :placement_groupable => true, :virtualization => 'hvm', :ebs_opizable => 10000 },
+    'c3.4xlarge'  =>  { :price => 1.20, :bits => 64, :ram =>  30720, :cores =>16, :core_size => 6.00, :inst_disks => 0, :inst_disk_size =>    0, :ephemeral_volumes => 0, :placement_groupable => true, :virtualization => 'hvm', :ebs_opizable => 10000 },
+    'c3.8xlarge'  =>  { :price => 2.40, :bits => 64, :ram =>  30720, :cores =>32, :core_size => 6.00, :inst_disks => 0, :inst_disk_size =>    0, :ephemeral_volumes => 0, :placement_groupable => true, :virtualization => 'hvm', :ebs_opizable => 10000 },
   })
 
 Chef::Config[:ec2_image_info] ||= {}
