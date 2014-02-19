@@ -200,8 +200,6 @@ module Ironfan
           ADH-DES-CBC3-SHA
           ADH-RC4-MD5
           ADH-SEED-SHA
-          AES128-SHA
-          AES256-SHA
           DES-CBC-MD5
           DES-CBC-SHA
           DES-CBC3-MD5
@@ -250,16 +248,20 @@ module Ironfan
 
         # TODO: Move over to Elliptic Curve Cipher Suites (ECDHE ciphers) as
         # soon as ELB supports them.
+
+
         ALLOWED_SSL_CIPHERS = %w[
           Protocol-SSLv3
           Protocol-TLSv1
           Protocol-TLSv1.1
           Protocol-TLSv1.2
+          AES128-SHA
+          AES256-SHA
           AES128-SHA256
           AES256-SHA256
           CAMELLIA128-SHA
-          CAMELLIA256-SHA
           DES-CBC3-SHA
+          CAMELLIA256-SHA
           DHE-DSS-CAMELLIA128-SHA
           DHE-DSS-CAMELLIA256-SHA
           DHE-DSS-SEED-SHA
