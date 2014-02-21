@@ -244,11 +244,9 @@ module Ironfan
           PSK-RC4-SHA
           RC4-MD5
           RC4-SHA
+          ECDHE-RSA-RC4-SHA
+          ECDHE-ECDSA-RC4-SHA
         ]
-
-        # TODO: Move over to Elliptic Curve Cipher Suites (ECDHE ciphers) as
-        # soon as ELB supports them.
-
 
         ALLOWED_SSL_CIPHERS = %w[
           Protocol-SSLv3
@@ -275,6 +273,18 @@ module Ironfan
           DHE-RSA-AES256-GCM-SHA384
           DHE-RSA-AES256-SHA256
           DHE-RSA-AES256-SHA
+          ECDHE-ECDSA-AES128-GCM-SHA256
+          ECDHE-RSA-AES128-GCM-SHA256
+          ECDHE-ECDSA-AES128-SHA256
+          ECDHE-RSA-AES128-SHA256
+          ECDHE-ECDSA-AES128-SHA
+          ECDHE-RSA-AES128-SHA
+          ECDHE-ECDSA-AES256-GCM-SHA384
+          ECDHE-RSA-AES256-GCM-SHA384
+          ECDHE-ECDSA-AES256-SHA384
+          ECDHE-RSA-AES256-SHA384
+          ECDHE-RSA-AES256-SHA
+          ECDHE-ECDSA-AES256-SHA
         ]
 
         field  :name,                      String
