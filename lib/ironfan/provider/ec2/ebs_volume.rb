@@ -12,7 +12,7 @@ module Ironfan
             :ready?, :reload, :requires, :requires_one, :save, :server,
             :server=, :server_id, :server_id=, :size, :size=, :snapshot,
             :snapshot_id, :snapshot_id=, :snapshots, :state, :state=,
-            :symbolize_keys, :tags, :tags=, :wait_for,
+            :symbolize_keys, :tags, :tags=, :wait_for, :volume_type,
           :to => :adaptee
         field :dsl_volume,        Ironfan::Dsl::Volume
 

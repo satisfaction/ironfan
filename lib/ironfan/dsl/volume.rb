@@ -22,6 +22,7 @@ module Ironfan
       magic     :resizable,             :boolean, :default => false
       magic     :snapshot_id,           String
       magic     :snapshot_name,         String
+      magic     :volume_type,           String
       magic     :tags,                  Hash,     :default => {}
 
       VOLUME_IDS ||= {}
