@@ -197,7 +197,7 @@ module Ironfan
             Ironfan.todo "CODE SMELL: Machine is too familiar with EbsVolume problems"
             ebs_vol = Ec2::EbsVolume.register v
             drive = computer.drives.values.select do |drive|
-              drive.volume.device == ebs_vol.device
+              drive.volume.device == ebs_vol.device if drive.volume
             end.first
             drive.disk = ebs_vol
 
