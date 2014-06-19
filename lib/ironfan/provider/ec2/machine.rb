@@ -295,7 +295,10 @@ module Ironfan
               hsh['Ebs.SnapshotId'] = volume.snapshot_id if volume.snapshot_id.present?
               hsh['Ebs.VolumeSize'] = volume.size.to_s   if volume.size.present?
               hsh['Ebs.DeleteOnTermination'] = (not volume.keep).to_s
-            else next
+              hsh['Ebs.VolumeType'] = 'gp2'
+            else
+              hsh['Ebs.VolumeType'] = 'gp2'
+              #next
             end
             hsh
           end.compact
