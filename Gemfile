@@ -1,6 +1,6 @@
 source "http://rubygems.org"
 
-gem 'chef',          "~> 10.16"
+gem 'chef',          "~> 11.12"
 gem 'fog',           "~> 1.19"
 gem 'excon',         "~> 0.31.0"
 gem 'formatador',    "~> 0.2"

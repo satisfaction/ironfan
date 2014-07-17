@@ -180,7 +180,7 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<chef>, ["~> 10.16"])
+      s.add_runtime_dependency(%q<chef>, ["~> 11.12"])
       s.add_runtime_dependency(%q<fog>, ["~> 1.19"])
       s.add_runtime_dependency(%q<excon>, ["~> 0.31.0"])
       s.add_runtime_dependency(%q<formatador>, ["~> 0.2"])
