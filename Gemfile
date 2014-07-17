@@ -10,7 +10,7 @@ gem 'diff-lcs',      "~> 1.2.5"
 
 # Everything in the world is being a stupid dick about JSON versions. Pin it
 #   to the one that doesn't seem to angrify everyone.
-gem 'json',          "= 1.5.4"
+gem 'json',          "= 1.7.7"
 
 group :development do
   gem 'bundler',     "~> 1.0"

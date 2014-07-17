@@ -187,7 +187,7 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<gorillib>, ["~> 0.5.0"])
       s.add_runtime_dependency(%q<rbvmomi>, [">= 0"])
       s.add_runtime_dependency(%q<diff-lcs>, ["~> 1.2.5"])
-      s.add_runtime_dependency(%q<json>, ["= 1.5.4"])
+      s.add_runtime_dependency(%q<json>, ["= 1.7.7"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0"])
       s.add_development_dependency(%q<rake>, [">= 0"])
       s.add_development_dependency(%q<rspec>, ["~> 2.8"])
