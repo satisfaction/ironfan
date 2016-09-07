@@ -191,8 +191,7 @@ module Ironfan
         # Remove ciphers which are vulnerable to the BEAST attack.
         # http://en.wikipedia.org/wiki/Transport_Layer_Security#BEAST_attack
         DISALLOWED_SSL_CIPHERS = %w[
-          Protocol-SSLv2
-	  Protocol-SSLv3
+	        Protocol-SSLv3
           ADH-AES128-SHA
           ADH-AES256-SHA
           ADH-CAMELLIA128-SHA
