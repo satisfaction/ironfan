@@ -69,6 +69,8 @@ module Ironfan
           end
 
           [ elbs_to_start, elbs_for_running_computers ].flatten.sort.uniq.each do |elb_name|
+            sleep(4)
+            puts "pausing for 4 seconds...hack to fix ITOPS-21825!"
             computers_using_this_elb = running_computers.select { |c| self.expected_ids(c).include?(elb_name) }
             self.start_or_sync_elb(elb_name, computers_using_this_elb, elbs_to_start.include?(elb_name))
           end
